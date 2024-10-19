@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'account.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -8,13 +9,14 @@ class DashboardPage extends StatelessWidget {
     const primaryColor = Color.fromRGBO(206, 255, 26, 1);
     const backgroundColor = Color.fromRGBO(13, 43, 51, 1);
 
-    return WillPopScope(
-      onWillPop: () async => false, // Disable back button
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: backgroundColor,
-          title: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false, // Removes back arrow
+        backgroundColor: backgroundColor,
+        title: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: SizedBox(
+            height: 40, // Reduced height
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search',
@@ -30,36 +32,41 @@ class DashboardPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(30),
                   borderSide: const BorderSide(color: primaryColor, width: 2),
                 ),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
               ),
               style: const TextStyle(color: Colors.white),
             ),
           ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: IconButton(
-                icon: const Icon(Icons.account_circle,
-                    color: primaryColor, size: 32),
-                onPressed: () {
-                  // TODO: Implement account action
-                },
-              ),
-            ),
-          ],
         ),
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: IconButton(
+              icon: const Icon(Icons.account_circle,
+                  color: primaryColor, size: 36), // Increased size
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AccountPage()),
+                );
+              },
             ),
           ),
-          child: const Center(
-            child: Text(
-              'Dashboard Content',
-              style: TextStyle(color: Colors.white, fontSize: 24),
-            ),
+        ],
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
+          ),
+        ),
+        child: const Center(
+          child: Text(
+            'Dashboard Content',
+            style: TextStyle(color: Colors.white, fontSize: 24),
           ),
         ),
       ),
