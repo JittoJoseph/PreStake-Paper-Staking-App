@@ -17,6 +17,7 @@ class _SignInPageState extends State<SignInPage> {
   Widget build(BuildContext context) {
     const primaryColor = Color.fromRGBO(206, 255, 26, 1);
     const backgroundColor = Color.fromRGBO(13, 43, 51, 1);
+    const accentColor = Color.fromRGBO(26, 255, 206, 1);
 
     return Scaffold(
       appBar: AppBar(
@@ -45,15 +46,19 @@ class _SignInPageState extends State<SignInPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     TextFormField(
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Email',
-                        labelStyle: TextStyle(color: Colors.white70),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white70),
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(color: accentColor),
                         ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: primaryColor),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(color: primaryColor),
                         ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 16),
                       ),
                       style: const TextStyle(color: Colors.white),
                       validator: (value) {
@@ -66,15 +71,19 @@ class _SignInPageState extends State<SignInPage> {
                     ),
                     const SizedBox(height: 20),
                     TextFormField(
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Password',
-                        labelStyle: TextStyle(color: Colors.white70),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white70),
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(color: accentColor),
                         ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: primaryColor),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(color: primaryColor),
                         ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 16),
                       ),
                       style: const TextStyle(color: Colors.white),
                       obscureText: true,
@@ -137,6 +146,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     const primaryColor = Color.fromRGBO(206, 255, 26, 1);
     const backgroundColor = Color.fromRGBO(13, 43, 51, 1);
+    const accentColor = Color.fromRGBO(26, 255, 206, 1);
 
     return Scaffold(
       appBar: AppBar(
@@ -170,13 +180,11 @@ class _SignUpPageState extends State<SignUpPage> {
                         labelStyle: const TextStyle(color: Colors.white70),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(25),
-                          borderSide: const BorderSide(
-                              color: Color.fromRGBO(26, 255, 206, 1)),
+                          borderSide: const BorderSide(color: accentColor),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(25),
-                          borderSide: const BorderSide(
-                              color: Color.fromRGBO(206, 255, 26, 1)),
+                          borderSide: const BorderSide(color: primaryColor),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 16),
@@ -192,15 +200,19 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 20),
                     TextFormField(
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Password',
-                        labelStyle: TextStyle(color: Colors.white70),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white70),
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(color: accentColor),
                         ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: primaryColor),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(color: primaryColor),
                         ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 16),
                       ),
                       style: const TextStyle(color: Colors.white),
                       obscureText: true,
@@ -210,19 +222,23 @@ class _SignUpPageState extends State<SignUpPage> {
                         }
                         return null;
                       },
-                      onSaved: (value) => _password = value!,
+                      onChanged: (value) => _password = value,
                     ),
                     const SizedBox(height: 20),
                     TextFormField(
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Confirm Password',
-                        labelStyle: TextStyle(color: Colors.white70),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white70),
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(color: accentColor),
                         ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: primaryColor),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: const BorderSide(color: primaryColor),
                         ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 16),
                       ),
                       style: const TextStyle(color: Colors.white),
                       obscureText: true,
