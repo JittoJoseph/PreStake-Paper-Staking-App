@@ -49,7 +49,7 @@ class DashboardPage extends StatelessWidget {
               padding: const EdgeInsets.only(right: 16.0),
               child: IconButton(
                 icon: const Icon(Icons.account_circle,
-                    color: primaryColor, size: 36),
+                    color: primaryColor, size: 38),
                 onPressed: () {
                   Navigator.push(
                     context,
