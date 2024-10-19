@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stakingnotify/pages/staketypes.dart';
-import 'dashboard.dart';
+import 'staketypes.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
