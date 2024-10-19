@@ -106,7 +106,7 @@ class LoginScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Text(
-                  '© 2024 StakeRewards Team',
+                  '© 2024 Jitto Joseph',
                   style: TextStyle(
                       color: primaryColor.withOpacity(0.7), fontSize: 12),
                 ),
