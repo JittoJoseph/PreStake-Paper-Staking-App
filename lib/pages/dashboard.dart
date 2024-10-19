@@ -1,10 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'account.dart';
-import 'package:intl/intl.dart'; // Add this to pubspec.yaml for number formatting
 
-class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
+class DashboardPage extends StatefulWidget {
+  final bool isRealStake;
+
+  const DashboardPage({super.key, required this.isRealStake});
+
+  @override
+  _DashboardPageState createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  List<Map<String, dynamic>> stakes = [
+    {
+      'validator': 'Meta Pool Validator',
+      'amount': 50000,
+      'apy': 13.2,
+      'status': 'Active',
+      'startDate': DateTime.now().subtract(const Duration(days: 30)),
+    },
+    {
+      'validator': 'Near Foundation',
+      'amount': 75000,
+      'apy': 11.8,
+      'status': 'Active',
+      'startDate': DateTime.now().subtract(const Duration(days: 60)),
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -12,168 +35,113 @@ class DashboardPage extends StatelessWidget {
     const backgroundColor = Color.fromRGBO(13, 43, 51, 1);
     const accentColor = Color.fromRGBO(26, 255, 206, 1);
 
-    return WillPopScope(
-      onWillPop: () async => false,
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: backgroundColor,
-          title: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: SizedBox(
-              height: 40,
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search validators',
-                  hintStyle: const TextStyle(color: Colors.white70),
-                  prefixIcon: const Icon(Icons.search, color: primaryColor),
-                  fillColor: backgroundColor,
-                  filled: true,
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: const BorderSide(color: primaryColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: const BorderSide(color: primaryColor, width: 2),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                ),
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: IconButton(
-                icon: const Icon(Icons.account_circle,
-                    color: primaryColor, size: 38),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const AccountPage()),
-                  );
-                },
-              ),
-            ),
-          ],
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: backgroundColor,
+        title: Text(
+          widget.isRealStake ? 'Real Stakes' : 'Simulated Stakes',
+          style: const TextStyle(color: primaryColor),
         ),
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: IconButton(
+              icon: const Icon(Icons.account_circle,
+                  color: primaryColor, size: 38),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AccountPage()),
+                );
+              },
             ),
           ),
-          child: RefreshIndicator(
-            color: primaryColor,
-            onRefresh: () async {
-              // Implement refresh logic
-            },
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // Quick Stats Section
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildQuickStatCard(
-                        'Total Staked',
-                        '125,000 NEAR',
-                        Icons.account_balance,
-                        primaryColor,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildQuickStatCard(
-                        'Total Rewards',
-                        '1,250 NEAR',
-                        Icons.stars,
-                        accentColor,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildQuickStatCard(
-                        'Current APY',
-                        '12.5%',
-                        Icons.trending_up,
-                        primaryColor,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildQuickStatCard(
-                        'Daily Earnings',
-                        '42 NEAR',
-                        Icons.calendar_today,
-                        accentColor,
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Charts Section
-                const SizedBox(height: 24),
-                _buildSectionTitle('Rewards History', primaryColor),
-                Container(
-                  height: 200,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: backgroundColor,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: primaryColor.withOpacity(0.3)),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Rewards Chart Will Go Here',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                  ),
-                ),
-
-                // Stakes List Section
-                const SizedBox(height: 24),
-                _buildSectionTitle('Active Stakes', primaryColor),
-                _buildStakeCard(
-                  'Meta Pool Validator',
-                  '50,000 NEAR',
-                  '13.2%',
-                  'Active',
-                  primaryColor,
-                  accentColor,
-                ),
-                const SizedBox(height: 12),
-                _buildStakeCard(
-                  'Near Foundation',
-                  '75,000 NEAR',
-                  '11.8%',
-                  'Active',
-                  primaryColor,
-                  accentColor,
-                ),
-              ],
-            ),
+        ],
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
           ),
         ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: primaryColor,
-          child: const Icon(Icons.add, color: backgroundColor),
-          onPressed: () {
-            // Implement new stake action
+        child: RefreshIndicator(
+          color: primaryColor,
+          onRefresh: () async {
+            // Implement refresh logic
           },
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // Quick Stats Section
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildQuickStatCard(
+                      'Total Staked',
+                      '${NumberFormat.compact().format(stakes.fold(0.0, (sum, stake) => sum + (stake['amount'] as num).toDouble()))} NEAR',
+                      Icons.account_balance,
+                      primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildQuickStatCard(
+                      'Total Rewards',
+                      '${NumberFormat.compact().format(_calculateTotalRewards())} NEAR',
+                      Icons.stars,
+                      accentColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildQuickStatCard(
+                      'Average APY',
+                      '${_calculateAverageAPY().toStringAsFixed(2)}%',
+                      Icons.trending_up,
+                      primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildQuickStatCard(
+                      'Daily Earnings',
+                      '${_calculateDailyEarnings().toStringAsFixed(2)} NEAR',
+                      Icons.calendar_today,
+                      accentColor,
+                    ),
+                  ),
+                ],
+              ),
+
+              // Stakes List Section
+              const SizedBox(height: 24),
+              _buildSectionTitle('Active Stakes', primaryColor),
+              ...stakes.map((stake) => _buildStakeCard(
+                    stake['validator'],
+                    '${NumberFormat.compact().format(stake['amount'])} NEAR',
+                    '${stake['apy']}%',
+                    stake['status'],
+                    primaryColor,
+                    accentColor,
+                  )),
+            ],
+          ),
         ),
       ),
+      floatingActionButton: widget.isRealStake
+          ? null
+          : FloatingActionButton(
+              backgroundColor: primaryColor,
+              onPressed: _showAddStakeDialog,
+              child: const Icon(Icons.add, color: backgroundColor),
+            ),
     );
   }
 
@@ -318,6 +286,110 @@ class DashboardPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  double _calculateTotalRewards() {
+    return stakes.fold(0.0, (sum, stake) {
+      final daysStaked =
+          DateTime.now().difference(stake['startDate'] as DateTime).inDays;
+      return sum +
+          ((stake['amount'] as num).toDouble() *
+              (stake['apy'] as num).toDouble() /
+              100 /
+              365 *
+              daysStaked);
+    });
+  }
+
+  double _calculateAverageAPY() {
+    if (stakes.isEmpty) return 0;
+    return stakes.fold(
+            0.0, (sum, stake) => sum + (stake['apy'] as num).toDouble()) /
+        stakes.length;
+  }
+
+  double _calculateDailyEarnings() {
+    return stakes.fold(
+        0.0,
+        (sum, stake) =>
+            sum +
+            ((stake['amount'] as num).toDouble() *
+                (stake['apy'] as num).toDouble() /
+                100 /
+                365));
+  }
+
+  void _showAddStakeDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String validator = '';
+        double amount = 0;
+        double apy = 0;
+        DateTime startDate = DateTime.now();
+
+        return AlertDialog(
+          title: const Text('Add New Stake'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: const InputDecoration(labelText: 'Validator'),
+                onChanged: (value) => validator = value,
+              ),
+              TextField(
+                decoration: const InputDecoration(labelText: 'Amount (NEAR)'),
+                keyboardType: TextInputType.number,
+                onChanged: (value) => amount = double.tryParse(value) ?? 0,
+              ),
+              TextField(
+                decoration: const InputDecoration(labelText: 'APY (%)'),
+                keyboardType: TextInputType.number,
+                onChanged: (value) => apy = double.tryParse(value) ?? 0,
+              ),
+              TextButton(
+                child: Text(
+                    'Start Date: ${DateFormat('yyyy-MM-dd').format(startDate)}'),
+                onPressed: () async {
+                  final DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: startDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null && picked != startDate) {
+                    setState(() {
+                      startDate = picked;
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Add'),
+              onPressed: () {
+                setState(() {
+                  stakes.add({
+                    'validator': validator,
+                    'amount': amount,
+                    'apy': apy,
+                    'status': 'Active',
+                    'startDate': startDate,
+                  });
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

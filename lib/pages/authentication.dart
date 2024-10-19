@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stakingnotify/pages/staketypes.dart';
 import 'dashboard.dart';
 
 class SignInPage extends StatefulWidget {
@@ -112,7 +113,7 @@ class _SignInPageState extends State<SignInPage> {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => const DashboardPage()),
+                                builder: (context) => const StakeTypesPage()),
                           );
                         }
                       },
@@ -270,7 +271,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => const DashboardPage()),
+                                builder: (context) => const StakeTypesPage()),
                           );
                         }
                       },
