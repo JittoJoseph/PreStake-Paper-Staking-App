@@ -1,4 +1,4 @@
-package com.example.stakingnotify
+package com.stakerewards.app
 
 import io.flutter.embedding.android.FlutterActivity
 

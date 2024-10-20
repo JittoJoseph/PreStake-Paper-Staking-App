@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1036767270343",
+    "project_id": "stakereward1",
+    "storage_bucket": "stakereward1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1036767270343:android:e3a50127bfd55aad4575e2",
+        "android_client_info": {
+          "package_name": "com.stakerewards.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCadtCHdb0P_icW4p-6FIh2h22TyD95ggk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

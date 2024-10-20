@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
-import 'pages/authentication.dart'; // Import the new authentication file
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'pages/authentication.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'pages/staketypes.dart';
 
-void main() => runApp(const StakeRewardsApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const StakeRewardsApp());
+}
 
 class StakeRewardsApp extends StatelessWidget {
   const StakeRewardsApp({super.key});
@@ -26,6 +37,38 @@ class StakeRewardsApp extends StatelessWidget {
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
+
+  Future<void> signInWithGoogle(BuildContext context) async {
+    try {
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication? googleAuth =
+          await googleUser?.authentication;
+
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth?.accessToken,
+        idToken: googleAuth?.idToken,
+      );
+
+      // Sign in to Firebase with the Google credential
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
+      // If sign in succeeds, navigate to StakeTypesPage
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const StakeTypesPage()),
+      );
+    } catch (e) {
+      // Handle any errors here
+      print('Error signing in with Google: $e');
+      // You might want to show an error message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to sign in with Google: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,9 +110,7 @@ class LoginScreen extends StatelessWidget {
                         primary: true,
                         backgroundColor: primaryColor,
                         textColor: backgroundColor,
-                        onPressed: () {
-                          // TODO: Implement Google Sign-In
-                        },
+                        onPressed: () => signInWithGoogle(context),
                       ),
                       const SizedBox(height: 20),
                       _buildButton(
