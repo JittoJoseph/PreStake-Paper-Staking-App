@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'pages/authentication.dart';
 import 'pages/staketypes.dart';
+import 'pages/dashboard.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,19 +31,29 @@ class StakeRewardsApp extends StatelessWidget {
               displayColor: Colors.white,
             ),
       ),
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
+      home: FutureBuilder<Widget>(
+        future: _decideInitialRoute(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
-          } else if (snapshot.hasData) {
-            return const StakeTypesPage();
-          } else {
-            return const LoginScreen();
+          if (snapshot.connectionState == ConnectionState.done) {
+            return snapshot.data ?? const LoginScreen();
           }
+          return const CircularProgressIndicator();
         },
       ),
     );
+  }
+
+  Future<Widget> _decideInitialRoute() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final prefs = await SharedPreferences.getInstance();
+      final isRealStake = prefs.getBool('isRealStake');
+      if (isRealStake != null) {
+        return DashboardPage(isRealStake: isRealStake);
+      }
+      return const StakeTypesPage();
+    }
+    return const LoginScreen();
   }
 }
 
