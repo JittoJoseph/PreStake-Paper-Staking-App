@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'pages/authentication.dart'; // Import the new authentication file
+import 'pages/authentication.dart';
 import 'pages/staketypes.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +29,18 @@ class StakeRewardsApp extends StatelessWidget {
               displayColor: Colors.white,
             ),
       ),
-      home: const LoginScreen(),
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator();
+          } else if (snapshot.hasData) {
+            return const StakeTypesPage();
+          } else {
+            return const LoginScreen();
+          }
+        },
+      ),
     );
   }
 }
@@ -95,21 +107,6 @@ class LoginScreen extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                                 builder: (context) => const SignUpPage()),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      _buildButton(
-                        label: 'Continue as Guest',
-                        primary: false,
-                        backgroundColor: Colors.white,
-                        textColor: backgroundColor,
-                        onPressed: () {
-                          // TODO: Implement guest login logic
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const StakeTypesPage()),
                           );
                         },
                       ),

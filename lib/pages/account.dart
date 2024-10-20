@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../main.dart'; // Import main.dart to access LoginScreen
 
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
+
+  Future<void> _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    if (!context.mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (Route<dynamic> route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,13 +73,7 @@ class AccountPage extends StatelessWidget {
                         side: const BorderSide(color: accentColor),
                       ),
                     ),
-                    onPressed: () {
-                      // Pop until we reach the login screen
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/',
-                        (Route<dynamic> route) => false,
-                      );
-                    },
+                    onPressed: () => _logout(context),
                     child: const Text('Logout'),
                   ),
                 ),

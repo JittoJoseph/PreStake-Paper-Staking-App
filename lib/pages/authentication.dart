@@ -44,7 +44,7 @@ class _SignInPageState extends State<SignInPage> {
             (Route<dynamic> route) => false,
           );
         }
-      } on FirebaseAuthException catch (e, stack) {
+      } on FirebaseAuthException catch (e) {
         print('Firebase Auth Error: ${e.code}'); // For debugging
 
         if (!mounted) return;
@@ -52,18 +52,6 @@ class _SignInPageState extends State<SignInPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Incorrect email or password'),
-          ),
-        );
-
-        setState(() {
-          _isLoading = false;
-        });
-      } catch (e) {
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Unknown error occurred, try again'),
           ),
         );
 

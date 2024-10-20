@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import 'account.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -12,369 +12,384 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  List<Map<String, dynamic>> stakes = [
+    {
+      'validator': 'Meta Pool Validator',
+      'amount': 50000,
+      'apy': 13.2,
+      'status': 'Active',
+      'startDate': DateTime.now().subtract(const Duration(days: 30)),
+    },
+    {
+      'validator': 'Near Foundation',
+      'amount': 75000,
+      'apy': 11.8,
+      'status': 'Active',
+      'startDate': DateTime.now().subtract(const Duration(days: 60)),
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
+    const primaryColor = Color.fromRGBO(206, 255, 26, 1);
+    const backgroundColor = Color.fromRGBO(13, 43, 51, 1);
+    const accentColor = Color.fromRGBO(26, 255, 206, 1);
+
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: backgroundColor,
         title: Text(
-          widget.isRealStake ? 'Meta Pool Dashboard' : 'Simulated Meta Pool',
-          style: const TextStyle(color: Colors.white),
+          widget.isRealStake ? 'Real Stakes' : 'Simulated Stakes',
+          style: const TextStyle(color: primaryColor),
         ),
-        backgroundColor: const Color(0xFF0D2B33),
         actions: [
-          _buildNotificationIcon(),
-          _buildAccountIcon(),
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: IconButton(
+              icon: const Icon(Icons.account_circle,
+                  color: primaryColor, size: 38),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AccountPage()),
+                );
+              },
+            ),
+          ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _buildQuickStats(),
-            const SizedBox(height: 24),
-            _buildRewardsGraph(),
-            const SizedBox(height: 24),
-            _buildNotificationFeed(),
-            const SizedBox(height: 24),
-            _buildMetaPoolInfo(),
-            const SizedBox(height: 24),
-            _buildQuickActions(),
-          ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
+          ),
+        ),
+        child: RefreshIndicator(
+          color: primaryColor,
+          onRefresh: () async {
+            // Implement refresh logic
+          },
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // Quick Stats Section
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildQuickStatCard(
+                      'Total Staked',
+                      '${NumberFormat.compact().format(stakes.fold(0.0, (sum, stake) => sum + (stake['amount'] as num).toDouble()))} NEAR',
+                      Icons.account_balance,
+                      primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildQuickStatCard(
+                      'Total Rewards',
+                      '${NumberFormat.compact().format(_calculateTotalRewards())} NEAR',
+                      Icons.stars,
+                      accentColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildQuickStatCard(
+                      'Average APY',
+                      '${_calculateAverageAPY().toStringAsFixed(2)}%',
+                      Icons.trending_up,
+                      primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildQuickStatCard(
+                      'Daily Earnings',
+                      '${_calculateDailyEarnings().toStringAsFixed(2)} NEAR',
+                      Icons.calendar_today,
+                      accentColor,
+                    ),
+                  ),
+                ],
+              ),
+
+              // Stakes List Section
+              const SizedBox(height: 24),
+              _buildSectionTitle('Active Stakes', primaryColor),
+              ...stakes.map((stake) => _buildStakeCard(
+                    stake['validator'],
+                    '${NumberFormat.compact().format(stake['amount'])} NEAR',
+                    '${stake['apy']}%',
+                    stake['status'],
+                    primaryColor,
+                    accentColor,
+                  )),
+            ],
+          ),
         ),
       ),
+      floatingActionButton: widget.isRealStake
+          ? null
+          : FloatingActionButton(
+              backgroundColor: primaryColor,
+              onPressed: _showAddStakeDialog,
+              child: const Icon(Icons.add, color: backgroundColor),
+            ),
     );
   }
 
-  Widget _buildNotificationIcon() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.notifications, color: Color(0xFFCEFF1A)),
-          onPressed: () {
-            // TODO: Implement notification center
-          },
-        ),
-        Positioned(
-          top: 8,
-          right: 8,
-          child: Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: Colors.red,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            constraints: const BoxConstraints(
-              minWidth: 14,
-              minHeight: 14,
-            ),
-            child: const Text(
-              '3',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 8,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAccountIcon() {
-    return IconButton(
-      icon: const Icon(Icons.account_circle, color: Color(0xFFCEFF1A)),
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const AccountPage()),
-        );
-      },
-    );
-  }
-
-  Widget _buildQuickStats() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Quick Stats',
-          style: TextStyle(
-            color: Color(0xFFCEFF1A),
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                  'Total Staked', '1,234,567 NEAR', Icons.account_balance),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildStatCard('Total Rewards', '9,876 NEAR', Icons.stars),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard('Current APY', '12.34%', Icons.trending_up),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildStatCard(
-                  'Daily Earnings', '123.45 NEAR', Icons.access_time),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, IconData icon) {
+  Widget _buildQuickStatCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A3A44),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFFCEFF1A), size: 24),
+          Icon(icon, color: color, size: 24),
           const SizedBox(height: 8),
           Text(
             title,
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
+            style: TextStyle(color: color, fontSize: 14),
           ),
           const SizedBox(height: 4),
           Text(
             value,
             style: const TextStyle(
-                color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRewardsGraph() {
+  Widget _buildSectionTitle(String title, Color color) {
+    return Text(
+      title,
+      style: TextStyle(
+        color: color,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  Widget _buildStakeCard(String validator, String amount, String apy,
+      String status, Color primaryColor, Color accentColor) {
     return Container(
-      height: 300,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A3A44),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: primaryColor.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Rewards History',
-            style: TextStyle(
-                color: Color(0xFFCEFF1A),
-                fontSize: 18,
-                fontWeight: FontWeight.bold),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                validator,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accentColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    color: accentColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: LineChart(
-              LineChartData(
-                gridData: const FlGridData(show: false),
-                titlesData: const FlTitlesData(show: false),
-                borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: 6,
-                minY: 0,
-                maxY: 6,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: [
-                      const FlSpot(0, 3),
-                      const FlSpot(1, 1),
-                      const FlSpot(2, 4),
-                      const FlSpot(3, 2),
-                      const FlSpot(4, 5),
-                      const FlSpot(5, 3),
-                    ],
-                    isCurved: true,
-                    color: const Color(0xFF1AFFCE),
-                    barWidth: 4,
-                    isStrokeCapRound: true,
-                    dotData: const FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                        show: true,
-                        color: const Color(0xFF1AFFCE).withOpacity(0.2)),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Staked Amount',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  Text(
+                    amount,
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ],
               ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text(
+                    'APY',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                  Text(
+                    apy,
+                    style: TextStyle(color: primaryColor, fontSize: 16),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () {
+                  // Implement claim rewards action
+                },
+                child: Text(
+                  'Claim Rewards',
+                  style: TextStyle(color: accentColor),
+                ),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: () {
+                  // Implement manage stake action
+                },
+                child: const Text(
+                  'Manage',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  double _calculateTotalRewards() {
+    return stakes.fold(0.0, (sum, stake) {
+      final daysStaked =
+          DateTime.now().difference(stake['startDate'] as DateTime).inDays;
+      return sum +
+          ((stake['amount'] as num).toDouble() *
+              (stake['apy'] as num).toDouble() /
+              100 /
+              365 *
+              daysStaked);
+    });
+  }
+
+  double _calculateAverageAPY() {
+    if (stakes.isEmpty) return 0;
+    return stakes.fold(
+            0.0, (sum, stake) => sum + (stake['apy'] as num).toDouble()) /
+        stakes.length;
+  }
+
+  double _calculateDailyEarnings() {
+    return stakes.fold(
+        0.0,
+        (sum, stake) =>
+            sum +
+            ((stake['amount'] as num).toDouble() *
+                (stake['apy'] as num).toDouble() /
+                100 /
+                365));
+  }
+
+  void _showAddStakeDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String validator = '';
+        double amount = 0;
+        double apy = 0;
+        DateTime startDate = DateTime.now();
+
+        return AlertDialog(
+          title: const Text('Add New Stake'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: const InputDecoration(labelText: 'Validator'),
+                onChanged: (value) => validator = value,
+              ),
+              TextField(
+                decoration: const InputDecoration(labelText: 'Amount (NEAR)'),
+                keyboardType: TextInputType.number,
+                onChanged: (value) => amount = double.tryParse(value) ?? 0,
+              ),
+              TextField(
+                decoration: const InputDecoration(labelText: 'APY (%)'),
+                keyboardType: TextInputType.number,
+                onChanged: (value) => apy = double.tryParse(value) ?? 0,
+              ),
+              TextButton(
+                child: Text(
+                    'Start Date: ${DateFormat('yyyy-MM-dd').format(startDate)}'),
+                onPressed: () async {
+                  final DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: startDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null && picked != startDate) {
+                    setState(() {
+                      startDate = picked;
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotificationFeed() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A3A44),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Recent Notifications',
-            style: TextStyle(
-                color: Color(0xFFCEFF1A),
-                fontSize: 18,
-                fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          _buildNotificationItem(
-              'Reward Received', '5 NEAR added to your rewards', '2 hours ago'),
-          const Divider(color: Colors.white24),
-          _buildNotificationItem(
-              'APY Increase', 'Pool APY increased to 13.5%', '1 day ago'),
-          const Divider(color: Colors.white24),
-          _buildNotificationItem('Stake Successful',
-              '1000 NEAR successfully staked', '3 days ago'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotificationItem(String title, String description, String time) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.circle_notifications, color: Color(0xFF1AFFCE)),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(description,
-                    style: const TextStyle(color: Colors.white70)),
-                const SizedBox(height: 4),
-                Text(time,
-                    style:
-                        const TextStyle(color: Colors.white54, fontSize: 12)),
-              ],
+            TextButton(
+              child: const Text('Add'),
+              onPressed: () {
+                setState(() {
+                  stakes.add({
+                    'validator': validator,
+                    'amount': amount,
+                    'apy': apy,
+                    'status': 'Active',
+                    'startDate': startDate,
+                  });
+                });
+                Navigator.of(context).pop();
+              },
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetaPoolInfo() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A3A44),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Meta Pool Info',
-            style: TextStyle(
-                color: Color(0xFFCEFF1A),
-                fontSize: 18,
-                fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          _buildMetaPoolInfoItem('Total Value Locked', '98,765,432 NEAR'),
-          _buildMetaPoolInfoItem('Your stNEAR Balance', '12,345 stNEAR'),
-          _buildMetaPoolInfoItem(
-              'Current Exchange Rate', '1 stNEAR = 1.0563 NEAR'),
-          _buildMetaPoolInfoItem('Your META Token Balance', '5,678 META'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetaPoolInfoItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.white70)),
-          Text(value,
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Quick Actions',
-          style: TextStyle(
-              color: Color(0xFFCEFF1A),
-              fontSize: 18,
-              fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(child: _buildActionButton('Stake', Icons.add)),
-            const SizedBox(width: 16),
-            Expanded(child: _buildActionButton('Unstake', Icons.remove)),
           ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(child: _buildActionButton('Claim Rewards', Icons.redeem)),
-            const SizedBox(width: 16),
-            Expanded(
-                child: _buildActionButton('Buy META', Icons.shopping_cart)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButton(String label, IconData icon) {
-    return ElevatedButton.icon(
-      icon: Icon(icon),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        foregroundColor: const Color(0xFF0D2B33),
-        backgroundColor: const Color(0xFFCEFF1A),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      onPressed: () {
-        // TODO: Implement action logic
+        );
       },
     );
-  }
-
-  Future<void> _refreshData() async {
-    // TODO: Implement refresh logic
-    await Future.delayed(const Duration(seconds: 1)); // Simulated delay
   }
 }
