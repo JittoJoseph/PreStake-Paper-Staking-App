@@ -2,8 +2,7 @@
 # See https://github.com/flutter/flutter/issues/128635 for more context.
 
 # Miscellaneous
-*.flutterfire.bat
-*.firebase_options.dart
+flutterfire.bat
 *.class
 *.lock
 *.log
@@ -140,3 +139,6 @@ app.*.symbols
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
 !.vscode/settings.json
+
+
+lib/firebase_options.dart
