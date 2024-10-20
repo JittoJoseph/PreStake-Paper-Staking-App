@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../main.dart'; // Import main.dart to access LoginScreen
+import '../main.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
@@ -15,6 +17,18 @@ class AccountPage extends StatelessWidget {
       MaterialPageRoute(builder: (context) => const LoginScreen()),
       (Route<dynamic> route) => false,
     );
+  }
+
+  Future<Map<String, dynamic>> _getUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userData = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      return userData.data() ?? {};
+    }
+    return {};
   }
 
   @override
@@ -43,52 +57,73 @@ class AccountPage extends StatelessWidget {
             colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
           ),
         ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Center(
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundColor: primaryColor,
-                    child: Icon(
-                      Icons.account_circle,
-                      size: 80,
-                      color: backgroundColor,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                _buildAccountDetails(primaryColor, accentColor),
-                const SizedBox(height: 24),
-                _buildSettingsSection(primaryColor, accentColor),
-                const SizedBox(height: 24),
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      foregroundColor: accentColor,
-                      minimumSize: const Size(200, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                        side: const BorderSide(color: accentColor),
+        child: FutureBuilder<Map<String, dynamic>>(
+          future: _getUserData(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final userData = snapshot.data ?? {};
+            final user = FirebaseAuth.instance.currentUser;
+            final createdAt = userData['createdAt'] as Timestamp?;
+            final joinDate = createdAt?.toDate() ?? DateTime.now();
+
+            return SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Center(
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: primaryColor,
+                        child: Icon(
+                          Icons.account_circle,
+                          size: 80,
+                          color: backgroundColor,
+                        ),
                       ),
                     ),
-                    onPressed: () => _logout(context),
-                    child: const Text('Logout'),
-                  ),
+                    const SizedBox(height: 24),
+                    _buildAccountDetails(
+                      primaryColor,
+                      accentColor,
+                      userData['displayName'] ?? 'N/A',
+                      user?.email ?? 'N/A',
+                      DateFormat('MMMM dd, yyyy').format(joinDate),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildSettingsSection(primaryColor, accentColor),
+                    const SizedBox(height: 24),
+                    Center(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: accentColor,
+                          minimumSize: const Size(200, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                            side: const BorderSide(color: accentColor),
+                          ),
+                        ),
+                        onPressed: () => _logout(context),
+                        child: const Text('Logout'),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildAccountDetails(Color primaryColor, Color accentColor) {
+  Widget _buildAccountDetails(Color primaryColor, Color accentColor,
+      String name, String email, String joinDate) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -101,10 +136,9 @@ class AccountPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _buildDetailRow('Name', 'John Doe', accentColor),
-        _buildDetailRow('Email', 'johndoe@example.com', accentColor),
-        _buildDetailRow('Joined', 'April 15, 2024', accentColor),
-        _buildDetailRow('Total Staked', '125,000 NEAR', accentColor),
+        _buildDetailRow('Name', name, accentColor),
+        _buildDetailRow('Email', email, accentColor),
+        _buildDetailRow('Joined', joinDate, accentColor),
       ],
     );
   }
