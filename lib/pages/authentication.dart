@@ -44,22 +44,15 @@ class _SignInPageState extends State<SignInPage> {
             (Route<dynamic> route) => false,
           );
         }
-      } on FirebaseAuthException catch (e) {
-        String errorMessage = 'An error occurred. Please try again.';
-        if (e.code == 'user-not-found') {
-          errorMessage = 'No user found for that email.';
-        } else if (e.code == 'wrong-password') {
-          errorMessage = 'Wrong password provided.';
-        } else if (e.code == 'invalid-email') {
-          errorMessage = 'The email address is not valid.';
-        } else if (e.code == 'user-disabled') {
-          errorMessage = 'This user account has been disabled.';
-        }
+      } on FirebaseAuthException catch (e, stack) {
+        print('Firebase Auth Error: ${e.code}'); // For debugging
 
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
+          const SnackBar(
+            content: Text('Incorrect email or password'),
+          ),
         );
 
         setState(() {
@@ -69,7 +62,9 @@ class _SignInPageState extends State<SignInPage> {
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('An error occurred. Please try again.')),
+          const SnackBar(
+            content: Text('Unknown error occurred, try again'),
+          ),
         );
 
         setState(() {
