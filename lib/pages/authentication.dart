@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'staketypes.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -138,9 +140,66 @@ class SignUpPage extends StatefulWidget {
 
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
-  String _email = '';
-  String _password = '';
-  String _confirmPassword = '';
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _signUp() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        final UserCredential userCredential =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+
+        if (userCredential.user != null) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userCredential.user!.uid)
+              .set({
+            'email': _emailController.text.trim(),
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const StakeTypesPage()),
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        String errorMessage = 'An error occurred. Please try again.';
+        if (e.code == 'weak-password') {
+          errorMessage = 'The password provided is too weak.';
+        } else if (e.code == 'email-already-in-use') {
+          errorMessage = 'An account already exists for that email.';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('An error occurred. Please try again.')),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -175,6 +234,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     TextFormField(
+                      controller: _emailController,
                       decoration: InputDecoration(
                         labelText: 'Email',
                         labelStyle: const TextStyle(color: Colors.white70),
@@ -194,12 +254,15 @@ class _SignUpPageState extends State<SignUpPage> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email';
                         }
+                        if (!value.contains('@') || !value.contains('.')) {
+                          return 'Please enter a valid email address';
+                        }
                         return null;
                       },
-                      onSaved: (value) => _email = value!,
                     ),
                     const SizedBox(height: 20),
                     TextFormField(
+                      controller: _passwordController,
                       decoration: InputDecoration(
                         labelText: 'Password',
                         labelStyle: const TextStyle(color: Colors.white70),
@@ -220,12 +283,15 @@ class _SignUpPageState extends State<SignUpPage> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter a password';
                         }
+                        if (value.length < 6) {
+                          return 'Password must be at least 6 characters long';
+                        }
                         return null;
                       },
-                      onChanged: (value) => _password = value,
                     ),
                     const SizedBox(height: 20),
                     TextFormField(
+                      controller: _confirmPasswordController,
                       decoration: InputDecoration(
                         labelText: 'Confirm Password',
                         labelStyle: const TextStyle(color: Colors.white70),
@@ -246,12 +312,11 @@ class _SignUpPageState extends State<SignUpPage> {
                         if (value == null || value.isEmpty) {
                           return 'Please confirm your password';
                         }
-                        if (value != _password) {
+                        if (value != _passwordController.text) {
                           return 'Passwords do not match';
                         }
                         return null;
                       },
-                      onSaved: (value) => _confirmPassword = value!,
                     ),
                     const SizedBox(height: 40),
                     ElevatedButton(
@@ -263,18 +328,10 @@ class _SignUpPageState extends State<SignUpPage> {
                           borderRadius: BorderRadius.circular(25),
                         ),
                       ),
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          _formKey.currentState!.save();
-                          // TODO: Implement actual sign up logic
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const StakeTypesPage()),
-                          );
-                        }
-                      },
-                      child: const Text('Sign Up'),
+                      onPressed: _isLoading ? null : _signUp,
+                      child: _isLoading
+                          ? const CircularProgressIndicator()
+                          : const Text('Sign Up'),
                     ),
                   ],
                 ),
