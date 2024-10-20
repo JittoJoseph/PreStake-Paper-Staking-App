@@ -7,20 +7,30 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1036767270343:android:e3a50127bfd55aad4575e2",
+        "mobilesdk_app_id": "1:1036767270343:android:9222e8e9bcbd09f54575e2",
         "android_client_info": {
           "package_name": "com.stakerewards.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1036767270343-o59apg5jq7i26k0lguof46de94oa891r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyCadtCHdb0P_icW4p-6FIh2h22TyD95ggk"
+          "current_key": "AIzaSyAFflzokQlcq5sGYYEYTdQTuf2kR9Zuj_c"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1036767270343-o59apg5jq7i26k0lguof46de94oa891r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

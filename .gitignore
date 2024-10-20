@@ -141,4 +141,3 @@ app.*.symbols
 
 
 **/lib/firebase_options.dart
-**flutterfire.bat
