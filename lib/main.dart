@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/authentication.dart'; // Import the new authentication file
+import 'pages/staketypes.dart';
 
 void main() => runApp(const StakeRewardsApp());
 
@@ -63,19 +64,9 @@ class LoginScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 48),
                       _buildButton(
-                        label: 'Continue with Google',
+                        label: 'Sign In',
                         primary: true,
                         backgroundColor: primaryColor,
-                        textColor: backgroundColor,
-                        onPressed: () {
-                          // TODO: Implement Google Sign-In
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      _buildButton(
-                        label: 'Sign In',
-                        primary: false,
-                        backgroundColor: accentColor,
                         textColor: backgroundColor,
                         onPressed: () {
                           Navigator.push(
@@ -89,13 +80,28 @@ class LoginScreen extends StatelessWidget {
                       _buildButton(
                         label: 'Sign Up',
                         primary: false,
-                        backgroundColor: Colors.white,
+                        backgroundColor: accentColor,
                         textColor: backgroundColor,
                         onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                                 builder: (context) => const SignUpPage()),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _buildButton(
+                        label: 'Continue as Guest',
+                        primary: false,
+                        backgroundColor: Colors.white,
+                        textColor: backgroundColor,
+                        onPressed: () {
+                          // TODO: Implement guest login logic
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const StakeTypesPage()),
                           );
                         },
                       ),
