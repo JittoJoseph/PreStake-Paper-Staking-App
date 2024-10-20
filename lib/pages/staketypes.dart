@@ -10,53 +10,56 @@ class StakeTypesPage extends StatelessWidget {
     const backgroundColor = Color.fromRGBO(13, 43, 51, 1);
     const accentColor = Color.fromRGBO(26, 255, 206, 1);
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.account_balance_wallet,
-                  size: 80,
-                  color: primaryColor,
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Choose Your Staking Mode',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+          child: SafeArea(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.account_balance_wallet,
+                    size: 80,
                     color: primaryColor,
                   ),
-                ),
-                const SizedBox(height: 48),
-                _buildOptionButton(
-                  context,
-                  'Connect Real Wallet',
-                  Icons.link,
-                  primaryColor,
-                  backgroundColor,
-                  () => _navigateToDashboard(context, true),
-                ),
-                const SizedBox(height: 20),
-                _buildOptionButton(
-                  context,
-                  'Simulate Stakes',
-                  Icons.science,
-                  accentColor,
-                  backgroundColor,
-                  () => _navigateToDashboard(context, false),
-                ),
-              ],
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Choose Your Staking Mode',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                  _buildOptionButton(
+                    context,
+                    'Connect Real Wallet',
+                    Icons.link,
+                    primaryColor,
+                    backgroundColor,
+                    () => _navigateToDashboard(context, true),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildOptionButton(
+                    context,
+                    'Simulate Stakes',
+                    Icons.science,
+                    accentColor,
+                    backgroundColor,
+                    () => _navigateToDashboard(context, false),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

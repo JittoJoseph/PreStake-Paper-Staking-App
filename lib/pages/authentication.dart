@@ -12,8 +12,72 @@ class SignInPage extends StatefulWidget {
 
 class _SignInPageState extends State<SignInPage> {
   final _formKey = GlobalKey<FormState>();
-  String _email = '';
-  String _password = '';
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _signIn() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        final UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+
+        if (userCredential.user != null) {
+          if (!mounted) return;
+
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const StakeTypesPage()),
+            (Route<dynamic> route) => false,
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        String errorMessage = 'An error occurred. Please try again.';
+        if (e.code == 'user-not-found') {
+          errorMessage = 'No user found for that email.';
+        } else if (e.code == 'wrong-password') {
+          errorMessage = 'Wrong password provided.';
+        } else if (e.code == 'invalid-email') {
+          errorMessage = 'The email address is not valid.';
+        } else if (e.code == 'user-disabled') {
+          errorMessage = 'This user account has been disabled.';
+        }
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
+
+        setState(() {
+          _isLoading = false;
+        });
+      } catch (e) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('An error occurred. Please try again.')),
+        );
+
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +112,7 @@ class _SignInPageState extends State<SignInPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     TextFormField(
+                      controller: _emailController,
                       decoration: InputDecoration(
                         labelText: 'Email',
                         labelStyle: const TextStyle(color: Colors.white70),
@@ -67,12 +132,15 @@ class _SignInPageState extends State<SignInPage> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email';
                         }
+                        if (!value.contains('@') || !value.contains('.')) {
+                          return 'Please enter a valid email address';
+                        }
                         return null;
                       },
-                      onSaved: (value) => _email = value!,
                     ),
                     const SizedBox(height: 20),
                     TextFormField(
+                      controller: _passwordController,
                       decoration: InputDecoration(
                         labelText: 'Password',
                         labelStyle: const TextStyle(color: Colors.white70),
@@ -95,7 +163,6 @@ class _SignInPageState extends State<SignInPage> {
                         }
                         return null;
                       },
-                      onSaved: (value) => _password = value!,
                     ),
                     const SizedBox(height: 40),
                     ElevatedButton(
@@ -107,18 +174,18 @@ class _SignInPageState extends State<SignInPage> {
                           borderRadius: BorderRadius.circular(25),
                         ),
                       ),
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          _formKey.currentState!.save();
-                          // TODO: Implement actual sign in logic
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const StakeTypesPage()),
-                          );
-                        }
-                      },
-                      child: const Text('Sign In'),
+                      onPressed: _isLoading ? null : _signIn,
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    backgroundColor),
+                              ),
+                            )
+                          : const Text('Sign In'),
                     ),
                   ],
                 ),
@@ -175,8 +242,11 @@ class _SignUpPageState extends State<SignUpPage> {
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-          Navigator.of(context).pushReplacement(
+          if (!mounted) return;
+
+          Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const StakeTypesPage()),
+            (Route<dynamic> route) => false,
           );
         }
       } on FirebaseAuthException catch (e) {
@@ -186,14 +256,23 @@ class _SignUpPageState extends State<SignUpPage> {
         } else if (e.code == 'email-already-in-use') {
           errorMessage = 'An account already exists for that email.';
         }
+
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage)),
         );
+
+        setState(() {
+          _isLoading = false;
+        });
       } catch (e) {
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('An error occurred. Please try again.')),
         );
-      } finally {
+
         setState(() {
           _isLoading = false;
         });
