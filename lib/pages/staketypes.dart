@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dashboard.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StakeTypesPage extends StatelessWidget {
   const StakeTypesPage({super.key});
@@ -84,7 +85,10 @@ class StakeTypesPage extends StatelessWidget {
     );
   }
 
-  void _navigateToDashboard(BuildContext context, bool isRealStake) {
+  void _navigateToDashboard(BuildContext context, bool isRealStake) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isRealStake', isRealStake);
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => DashboardPage(isRealStake: isRealStake),
