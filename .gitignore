@@ -3,6 +3,7 @@
 
 # Miscellaneous
 *.flutterfire.bat
+*.firebase_options.dart
 *.class
 *.lock
 *.log
