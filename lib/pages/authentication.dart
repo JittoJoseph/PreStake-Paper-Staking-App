@@ -215,33 +215,31 @@ class _SignUpPageState extends State<SignUpPage> {
         final UserCredential userCredential =
             await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
-          password: _passwordController.text,
+          password: _passwordController.text.trim(),
         );
 
-        if (userCredential.user != null) {
-          // Update display name
-          await userCredential.user!
-              .updateDisplayName(_nameController.text.trim());
+        // Initialize user data in Firestore
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
+          'uid': userCredential.user!.uid,
+          'name': _nameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'virtualNEARBalance': 1000,
+          'virtualStNEARBalance': 0,
+          'totalRewardsEarned': 0,
+          'apy': 0,
+          'performanceHistory': [],
+          'transactions': [],
+          'pendingUnstakes': [],
+        });
 
-          // Store user data in Firestore
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(userCredential.user!.uid)
-              .set({
-            'displayName': _nameController.text.trim(),
-            'email': _emailController.text.trim(),
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-
-          if (!mounted) return;
-
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-                builder: (context) =>
-                    const DashboardPage()), // Update navigation
-            (Route<dynamic> route) => false,
-          );
-        }
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+              builder: (context) => const DashboardPage()), // Update navigation
+          (Route<dynamic> route) => false,
+        );
       } on FirebaseAuthException catch (e) {
         String errorMessage = 'An error occurred. Please try again.';
         if (e.code == 'weak-password') {

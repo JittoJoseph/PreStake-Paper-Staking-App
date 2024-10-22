@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -10,8 +9,6 @@ class AccountPage extends StatelessWidget {
 
   Future<void> _logout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('isRealStake');
     if (!context.mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -90,7 +87,7 @@ class AccountPage extends StatelessWidget {
                     _buildAccountDetails(
                       primaryColor,
                       accentColor,
-                      userData['displayName'] ?? 'N/A',
+                      userData['name'] ?? 'N/A',
                       user?.email ?? 'N/A',
                       DateFormat('MMMM dd, yyyy').format(joinDate),
                     ),
