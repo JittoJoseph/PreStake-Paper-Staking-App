@@ -4,7 +4,6 @@ import 'pages/dashboard.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Color scheme constants
 class AppColors {
@@ -64,12 +63,20 @@ class StakeRewardsApp extends StatelessWidget {
               const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
       ),
-      home: FutureBuilder<Widget>(
-        future: _decideInitialRoute(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return snapshot.data ?? const LoginScreen();
-          }
+      home: const AuthWrapper(),
+    );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             backgroundColor: AppColors.backgroundColor,
             body: Center(
@@ -79,8 +86,12 @@ class StakeRewardsApp extends StatelessWidget {
               ),
             ),
           );
-        },
-      ),
+        } else if (snapshot.hasData) {
+          return const DashboardPage();
+        } else {
+          return const LoginScreen();
+        }
+      },
     );
   }
 }
@@ -191,29 +202,4 @@ class LoginScreen extends StatelessWidget {
       child: Text(label),
     );
   }
-}
-
-// Add this method at the class level of StakeRewardsApp
-Future<Widget> _decideInitialRoute() async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    // Check if user wallet exists in Firestore
-    final walletDoc = await FirebaseFirestore.instance
-        .collection('wallets')
-        .doc(user.uid)
-        .get();
-
-    if (!walletDoc.exists) {
-      // Create initial wallet for new user
-      await FirebaseFirestore.instance.collection('wallets').doc(user.uid).set({
-        'balance': 1000.0, // Initial paper NEAR balance
-        'created_at': FieldValue.serverTimestamp(),
-        'last_updated': FieldValue.serverTimestamp(),
-        'transactions': [],
-        'staking': {'total_staked': 0.0, 'positions': []}
-      });
-    }
-    return const DashboardPage();
-  }
-  return const LoginScreen();
 }
