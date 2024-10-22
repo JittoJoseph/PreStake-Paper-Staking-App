@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'staketypes.dart';
+import 'dashboard.dart'; // Update import
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -40,7 +40,9 @@ class _SignInPageState extends State<SignInPage> {
           if (!mounted) return;
 
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const StakeTypesPage()),
+            MaterialPageRoute(
+                builder: (context) =>
+                    const DashboardPage()), // Update navigation
             (Route<dynamic> route) => false,
           );
         }
@@ -236,7 +238,9 @@ class _SignUpPageState extends State<SignUpPage> {
           if (!mounted) return;
 
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const StakeTypesPage()),
+            MaterialPageRoute(
+                builder: (context) =>
+                    const DashboardPage()), // Update navigation
             (Route<dynamic> route) => false,
           );
         }

@@ -3,9 +3,7 @@ import 'package:intl/intl.dart';
 import 'account.dart';
 
 class DashboardPage extends StatefulWidget {
-  final bool isRealStake;
-
-  const DashboardPage({super.key, required this.isRealStake});
+  const DashboardPage({super.key});
 
   @override
   _DashboardPageState createState() => _DashboardPageState();
@@ -39,9 +37,9 @@ class _DashboardPageState extends State<DashboardPage> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: backgroundColor,
-        title: Text(
-          widget.isRealStake ? 'Real Stakes' : 'Simulated Stakes',
-          style: const TextStyle(color: primaryColor),
+        title: const Text(
+          'Dashboard',
+          style: TextStyle(color: primaryColor),
         ),
         actions: [
           Padding(
@@ -135,13 +133,11 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
       ),
-      floatingActionButton: widget.isRealStake
-          ? null
-          : FloatingActionButton(
-              backgroundColor: primaryColor,
-              onPressed: _showAddStakeDialog,
-              child: const Icon(Icons.add, color: backgroundColor),
-            ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: primaryColor,
+        onPressed: _showAddStakeDialog,
+        child: const Icon(Icons.add, color: backgroundColor),
+      ),
     );
   }
 
