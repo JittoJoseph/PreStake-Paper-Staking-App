@@ -90,6 +90,8 @@ class AccountPage extends StatelessWidget {
                       userData['name'] ?? 'N/A',
                       user?.email ?? 'N/A',
                       DateFormat('MMMM dd, yyyy').format(joinDate),
+                      userData['virtualNEARBalance'] ?? 0,
+                      userData['virtualStNEARBalance'] ?? 0,
                     ),
                     const SizedBox(height: 24),
                     _buildSettingsSection(primaryColor, accentColor),
@@ -119,8 +121,14 @@ class AccountPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountDetails(Color primaryColor, Color accentColor,
-      String name, String email, String joinDate) {
+  Widget _buildAccountDetails(
+      Color primaryColor,
+      Color accentColor,
+      String name,
+      String email,
+      String joinDate,
+      int vNearBalance,
+      int vStNearBalance) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -136,6 +144,9 @@ class AccountPage extends StatelessWidget {
         _buildDetailRow('Name', name, accentColor),
         _buildDetailRow('Email', email, accentColor),
         _buildDetailRow('Joined', joinDate, accentColor),
+        _buildDetailRow('NEAR Balance', vNearBalance.toString(), accentColor),
+        _buildDetailRow(
+            'stNEAR Balance', vStNearBalance.toString(), accentColor),
       ],
     );
   }
