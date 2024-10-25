@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:stakingnotify/main.dart';
 import 'account.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -14,12 +15,15 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  List<Map<String, dynamic>> stakes = [];
+  List<dynamic> stakes = [];
+  final amountController = TextEditingController();
+  bool showAllStakes = false;
+  final stakeAmountController = TextEditingController();
 
   double stNearNearExchangeRate = 1.0;
   double stNearUsdPrice = 1.0;
-  double apy = 0.12; // Fixed APY of 12%
-  double nearUsdPrice = 1.0; // Added NEAR to USD exchange rate
+  double apy = 0.12;
+  double nearUsdPrice = 1.0;
 
   Future<void> _fetchExchangeRates() async {
     try {
@@ -29,19 +33,15 @@ class _DashboardPageState extends State<DashboardPage> {
           'https://validators.narwallets.com/metrics/price/stnear-usd'));
 
       if (nearResponse.statusCode == 200 && usdResponse.statusCode == 200) {
-        // Parse the response body differently based on its type
         dynamic nearData = jsonDecode(nearResponse.body);
         dynamic usdData = jsonDecode(usdResponse.body);
 
         setState(() {
-          // Convert the data to double, handling different possible formats
           stNearNearExchangeRate = _parseToDouble(nearData);
           stNearUsdPrice = _parseToDouble(usdData);
-          nearUsdPrice =
-              stNearUsdPrice / stNearNearExchangeRate; // Update nearUsdPrice
+          nearUsdPrice = stNearUsdPrice / stNearNearExchangeRate;
         });
       } else {
-        // Handle error - show a snackbar or log the error
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
@@ -56,7 +56,6 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-// Helper function to parse different data types to double
   double _parseToDouble(dynamic value) {
     if (value is double) {
       return value;
@@ -84,17 +83,17 @@ class _DashboardPageState extends State<DashboardPage> {
           userData = userDataSnapshot.data();
           isLoading = false;
         });
+        _updateStakesList(); // Make sure this is being called
+        print("fetchUserData completed. userData: $userData"); // Debug print
       } else {
-        // Handle the case where the user is not logged in
         setState(() {
           isLoading = false;
         });
       }
     } catch (e) {
-      // Handle errors appropriately
+      print("Error in fetchUserData: $e"); // Debug print
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error fetching user data: $e')));
-      print('Error fetching user data: $e');
       setState(() {
         isLoading = false;
       });
@@ -109,11 +108,14 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    const primaryColor = Color.fromRGBO(206, 255, 26, 1);
-    const backgroundColor = Color.fromRGBO(13, 43, 51, 1);
-    const accentColor = Color.fromRGBO(26, 255, 206, 1);
+  void dispose() {
+    amountController.dispose();
+    stakeAmountController.dispose();
+    super.dispose();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     if (isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -129,24 +131,23 @@ class _DashboardPageState extends State<DashboardPage> {
     final totalStakedNear = userData!['stakedNEARBalance'] as num? ?? 0;
     final totalRewardsEarned = userData!['totalRewardsEarned'] as num? ?? 0;
     final availableNear = userData!['availableNEARBalance'] as num? ?? 0;
-    // Updated Calculation for totalPortfolioValue
     final totalPortfolioValue = totalStakedNear.toDouble() * stNearUsdPrice +
         (availableNear + totalRewardsEarned).toDouble() * nearUsdPrice;
 
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: backgroundColor,
+        backgroundColor: AppColors.backgroundColor,
         title: const Text(
           'Dashboard',
-          style: TextStyle(color: primaryColor),
+          style: TextStyle(color: AppColors.primaryColor),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: IconButton(
               icon: const Icon(Icons.account_circle,
-                  color: primaryColor, size: 38),
+                  color: AppColors.primaryColor, size: 38),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -162,81 +163,138 @@ class _DashboardPageState extends State<DashboardPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
+            colors: [
+              AppColors.backgroundColor,
+              AppColors.backgroundColor.withOpacity(0.8)
+            ],
           ),
         ),
         child: RefreshIndicator(
-          color: primaryColor,
+          color: AppColors.primaryColor,
           onRefresh: () async {
             await _fetchExchangeRates();
             await _fetchUserData();
           },
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+          child: Column(
             children: [
-              // Quick Stats Section
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildQuickStatCard(
-                      'Total Portfolio Value',
-                      '\$${totalPortfolioValue.toStringAsFixed(2)}',
-                      Icons.account_balance_wallet,
-                      primaryColor,
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildQuickStatCard(
+                            'Total Portfolio Value',
+                            '\$${totalPortfolioValue.toStringAsFixed(2)}',
+                            Icons.account_balance_wallet,
+                            AppColors.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildQuickStatCard(
+                            'Total Staked NEAR',
+                            '${NumberFormat.compact().format(totalStakedNear)} NEAR',
+                            Icons.stacked_line_chart,
+                            AppColors.accentColor,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildQuickStatCard(
-                      'Total Staked NEAR',
-                      '${NumberFormat.compact().format(totalStakedNear)} NEAR',
-                      Icons.stacked_line_chart,
-                      accentColor,
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildQuickStatCard(
+                            'Rewards Earned',
+                            '${NumberFormat.compact().format(totalRewardsEarned)} NEAR',
+                            Icons.currency_exchange,
+                            AppColors.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildQuickStatCard(
+                            'Available NEAR',
+                            '${NumberFormat.compact().format(availableNear)} NEAR',
+                            Icons.account_balance_wallet,
+                            AppColors.accentColor,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    _buildExchangeRateCard(
+                        '1 NEAR =', nearUsdPrice, AppColors.accentColor),
+                    const SizedBox(height: 24),
+                    _buildSectionTitle('Active Stakes', AppColors.primaryColor),
+                    ..._buildStakesList(),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildQuickStatCard(
-                      'Rewards Earned',
-                      '${NumberFormat.compact().format(totalRewardsEarned)} NEAR',
-                      Icons.currency_exchange,
-                      primaryColor,
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryColor,
+                        foregroundColor: AppColors.backgroundColor,
+                        minimumSize: const Size(150, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () => _showStakeDialog(context),
+                      child: const Text('Stake'),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildQuickStatCard(
-                      'Available NEAR',
-                      '${NumberFormat.compact().format(availableNear)} NEAR',
-                      Icons.account_balance_wallet,
-                      accentColor,
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accentColor,
+                        foregroundColor: AppColors.backgroundColor,
+                        minimumSize: const Size(150, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {}, // Implement unstake logic later
+                      child: const Text('Unstake'),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              _buildExchangeRateCard('1 NEAR =', nearUsdPrice, accentColor),
-
-              // Stakes List Section
-              const SizedBox(height: 24),
-              _buildSectionTitle('Active Stakes', primaryColor),
-              ...stakes.map((stake) => _buildStakeCard(
-                    stake['validator'],
-                    stake['amount'],
-                    stake['apy'].toDouble(),
-                    stake['status'],
-                    primaryColor,
-                    accentColor,
-                  )),
             ],
           ),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildStakesList() {
+    print(
+        "Building stakes list. Stakes length: ${stakes.length}"); // Debug print
+    if (stakes.isEmpty) {
+      return [
+        const Center(child: Text('No active stakes')),
+      ];
+    }
+
+    return stakes.map((stake) {
+      print("Processing stake: $stake"); // Debug print
+      if (stake['amount'] == null || stake['apy'] == null) {
+        return const SizedBox.shrink();
+      }
+      return _buildStakeCard(
+        '', // empty string since we don't use validator
+        stake['amount'],
+        stake['apy'].toDouble(),
+        'Active',
+        AppColors.primaryColor,
+        AppColors.accentColor,
+      );
+    }).toList();
   }
 
   Widget _buildQuickStatCard(
@@ -283,7 +341,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildStakeCard(String validator, num amount, double apy,
-      String status, Color primaryColor, Color accentColor) {
+      dynamic status, Color primaryColor, Color accentColor) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -298,7 +356,7 @@ class _DashboardPageState extends State<DashboardPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                validator,
+                '${NumberFormat.compact().format(amount)} NEAR',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -312,7 +370,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  status,
+                  'Active',
                   style: TextStyle(
                     color: accentColor,
                     fontSize: 12,
@@ -329,11 +387,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Staked Amount',
+                    'stNEAR',
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   Text(
-                    NumberFormat.compact().format(amount),
+                    NumberFormat.compact()
+                        .format(amount * stNearNearExchangeRate),
                     style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ],
@@ -346,35 +405,10 @@ class _DashboardPageState extends State<DashboardPage> {
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   Text(
-                    apy.toStringAsFixed(2),
+                    '${apy.toStringAsFixed(2)}%',
                     style: TextStyle(color: primaryColor, fontSize: 16),
                   ),
                 ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: () {
-                  // Implement claim rewards action
-                },
-                child: Text(
-                  'Claim Rewards',
-                  style: TextStyle(color: accentColor),
-                ),
-              ),
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: () {
-                  // Implement manage stake action
-                },
-                child: const Text(
-                  'Manage',
-                  style: TextStyle(color: Colors.white70),
-                ),
               ),
             ],
           ),
@@ -438,5 +472,152 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _stakeNEAR() async {
+    final amountToStake = double.tryParse(stakeAmountController.text) ?? 0.0;
+
+    if (amountToStake <= 0 ||
+        amountToStake > (userData?['availableNEARBalance']?.toDouble() ?? 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid stake amount')),
+      );
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        // Create the simplified stake transaction
+        final stakeTransaction = {
+          'amountNear': amountToStake,
+          'amountStNear':
+              amountToStake * stNearNearExchangeRate, // Convert NEAR to stNEAR
+          'timestamp': DateTime.now(),
+          'type': 'stake',
+          'rewards': 0.0, // Initial rewards are 0
+        };
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({
+          'availableNEARBalance':
+              (userData!['availableNEARBalance'] as num).toDouble() -
+                  amountToStake,
+          'stakedNEARBalance':
+              (userData!['stakedNEARBalance'] as num).toDouble() +
+                  amountToStake,
+          'transactions': FieldValue.arrayUnion([stakeTransaction]),
+        });
+
+        setState(() {
+          _fetchUserData();
+          Navigator.of(context).pop();
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$amountToStake NEAR staked successfully')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error staking NEAR: $e')),
+        );
+      }
+    }
+  }
+
+  void _showStakeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppColors.backgroundColor,
+          title: const Text('Stake NEAR',
+              style: TextStyle(color: AppColors.primaryColor)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Amount to stake:',
+                  style: TextStyle(color: AppColors.textColorPrimary)),
+              TextField(
+                controller: stakeAmountController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: AppColors.textColorPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Enter amount',
+                  hintStyle:
+                      const TextStyle(color: AppColors.textColorSecondary),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.accentColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primaryColor),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('Available NEAR: ${userData?['availableNEARBalance'] ?? 0}',
+                  style: const TextStyle(color: AppColors.textColorPrimary)),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel',
+                        style: TextStyle(color: AppColors.accentColor)),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor,
+                      foregroundColor: AppColors.backgroundColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: _stakeNEAR,
+                    child: const Text('Stake'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _updateStakesList() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .then((value) {
+        final transactions =
+            value.data()?['transactions'] as List<dynamic>? ?? [];
+        print("Raw transactions from Firestore: $transactions");
+
+        final stakeTransactions = transactions
+            .where((transaction) => transaction['type'] == 'stake')
+            .map((transaction) => {
+                  'amount': transaction['amountNear'] ?? 0.0,
+                  'apy': apy,
+                })
+            .toList();
+        print("Processed stake transactions: $stakeTransactions");
+
+        setState(() {
+          stakes = stakeTransactions;
+          print("Stakes array after setState: $stakes");
+        });
+      });
+    }
   }
 }
