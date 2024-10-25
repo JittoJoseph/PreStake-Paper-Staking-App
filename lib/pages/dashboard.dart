@@ -259,7 +259,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: () {}, // Implement unstake logic later
+                      onPressed: () => _showUnstakeDialog(context),
                       child: const Text('Unstake'),
                     ),
                   ],
@@ -567,7 +567,7 @@ class _DashboardPageState extends State<DashboardPage> {
         // Create the simplified stake transaction
         final stakeTransaction = {
           'amountNear': amountToStake,
-          'timestamp': FieldValue.serverTimestamp(), // Use server timestamp
+          'timestamp': Timestamp.now(), // Use server timestamp
           'type': 'stake',
           'rewards': 0.0, // Initial rewards are 0
           'state': 'active', // Add state field
@@ -697,6 +697,158 @@ class _DashboardPageState extends State<DashboardPage> {
           print("Stakes array after setState: $stakes");
         });
       });
+    }
+  }
+
+  void _showUnstakeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppColors.backgroundColor,
+          title: const Text('Unstake NEAR',
+              style: TextStyle(color: AppColors.primaryColor)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Amount to unstake:',
+                  style: TextStyle(color: AppColors.textColorPrimary)),
+              TextField(
+                controller:
+                    stakeAmountController, // Reusing the same controller
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: AppColors.textColorPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Enter amount',
+                  hintStyle:
+                      const TextStyle(color: AppColors.textColorSecondary),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.accentColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primaryColor),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                  'Total Staked NEAR: ${userData?['stakedNEARBalance']?.toStringAsFixed(2) ?? 0}',
+                  style: const TextStyle(color: AppColors.textColorPrimary)),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel',
+                        style: TextStyle(color: AppColors.accentColor)),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor,
+                      foregroundColor: AppColors.backgroundColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: _unstakeNEAR,
+                    child: const Text('Unstake'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _unstakeNEAR() async {
+    final amountToUnstake = double.tryParse(stakeAmountController.text) ?? 0.0;
+    final totalStaked = userData?['stakedNEARBalance']?.toDouble() ?? 0.0;
+
+    if (amountToUnstake <= 0 || amountToUnstake > totalStaked) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid unstake amount')),
+      );
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        // Get current transactions
+        final List<dynamic> currentTransactions =
+            List.from(userData?['transactions'] ?? []);
+
+        // Sort active stake transactions by timestamp (oldest first)
+        final activeStakes = currentTransactions
+            .where((t) => t['type'] == 'stake' && t['state'] == 'active')
+            .toList()
+          ..sort((a, b) => (a['timestamp'] as Timestamp)
+              .compareTo(b['timestamp'] as Timestamp));
+
+        double remainingAmountToUnstake = amountToUnstake;
+        List<Map<String, dynamic>> updatedTransactions = [];
+
+        // Process stakes from oldest to newest
+        for (var stake in activeStakes) {
+          if (remainingAmountToUnstake <= 0) break;
+
+          final stakeAmount = stake['amountNear'] as num;
+          if (stakeAmount <= remainingAmountToUnstake) {
+            // Fully unstake this stake
+            stake['state'] = 'inactive';
+            remainingAmountToUnstake -= stakeAmount;
+          } else {
+            // Partially unstake
+            final newStakeAmount = stakeAmount - remainingAmountToUnstake;
+            stake['amountNear'] = newStakeAmount;
+
+            // Create a record for the unstaked portion
+            final unstakeTransaction = {
+              'amountNear': remainingAmountToUnstake,
+              'timestamp': Timestamp.now(),
+              'type': 'unstake',
+              'state': 'completed',
+              'rewards':
+                  stake['rewards'] * (remainingAmountToUnstake / stakeAmount),
+            };
+            updatedTransactions.add(unstakeTransaction);
+            remainingAmountToUnstake = 0;
+          }
+        }
+
+        // Update Firestore
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({
+          'availableNEARBalance':
+              (userData!['availableNEARBalance'] as num).toDouble() +
+                  amountToUnstake,
+          'stakedNEARBalance': totalStaked - amountToUnstake,
+          'transactions': [...currentTransactions, ...updatedTransactions],
+        });
+
+        setState(() {
+          _fetchUserData();
+          Navigator.of(context).pop();
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Successfully unstaked $amountToUnstake NEAR')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error unstaking NEAR: $e')),
+        );
+      }
     }
   }
 }
