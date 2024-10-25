@@ -273,8 +273,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   List<Widget> _buildStakesList() {
-    print(
-        "Building stakes list. Stakes length: ${stakes.length}"); // Debug print
+    print("Building stakes list. Stakes length: ${stakes.length}");
     if (stakes.isEmpty) {
       return [
         const Center(child: Text('No active stakes')),
@@ -282,17 +281,94 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     return stakes.map((stake) {
-      print("Processing stake: $stake"); // Debug print
-      if (stake['amount'] == null || stake['apy'] == null) {
+      print("Processing stake: $stake");
+      if (stake['amount'] == null || stake['rewards'] == null) {
         return const SizedBox.shrink();
       }
-      return _buildStakeCard(
-        '', // empty string since we don't use validator
-        stake['amount'],
-        stake['apy'].toDouble(),
-        'Active',
-        AppColors.primaryColor,
-        AppColors.accentColor,
+
+      // Convert Timestamp to DateTime
+      final Timestamp timestamp = stake['timestamp'] as Timestamp;
+      final DateTime stakeDate = timestamp.toDate();
+      final formattedDate = DateFormat('MMM d, yyyy').format(stakeDate);
+
+      return Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.black12,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.primaryColor.withOpacity(0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Left side
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${NumberFormat.compact().format(stake['amount'])} NEAR',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Staked on $formattedDate',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                // Right side
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '+${stake['rewards'].toStringAsFixed(2)} NEAR',
+                      style: const TextStyle(
+                        color: AppColors.accentColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Rewards',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            if (stake['state'] == 'active')
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.accentColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'Active',
+                  style: TextStyle(
+                    color: AppColors.accentColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+        ),
       );
     }).toList();
   }
@@ -491,11 +567,10 @@ class _DashboardPageState extends State<DashboardPage> {
         // Create the simplified stake transaction
         final stakeTransaction = {
           'amountNear': amountToStake,
-          'amountStNear':
-              amountToStake * stNearNearExchangeRate, // Convert NEAR to stNEAR
-          'timestamp': DateTime.now(),
+          'timestamp': FieldValue.serverTimestamp(), // Use server timestamp
           'type': 'stake',
           'rewards': 0.0, // Initial rewards are 0
+          'state': 'active', // Add state field
         };
 
         await FirebaseFirestore.instance
@@ -605,10 +680,14 @@ class _DashboardPageState extends State<DashboardPage> {
         print("Raw transactions from Firestore: $transactions");
 
         final stakeTransactions = transactions
-            .where((transaction) => transaction['type'] == 'stake')
+            .where((transaction) =>
+                transaction['type'] == 'stake' &&
+                transaction['state'] == 'active')
             .map((transaction) => {
                   'amount': transaction['amountNear'] ?? 0.0,
-                  'apy': apy,
+                  'rewards': transaction['rewards'] ?? 0.0,
+                  'timestamp': transaction['timestamp'],
+                  'state': transaction['state'],
                 })
             .toList();
         print("Processed stake transactions: $stakeTransactions");
