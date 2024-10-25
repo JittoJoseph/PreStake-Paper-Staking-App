@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dashboard.dart'; // Update import
+import 'dashboard.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -40,14 +40,12 @@ class _SignInPageState extends State<SignInPage> {
           if (!mounted) return;
 
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-                builder: (context) =>
-                    const DashboardPage()), // Update navigation
+            MaterialPageRoute(builder: (context) => const DashboardPage()),
             (Route<dynamic> route) => false,
           );
         }
       } on FirebaseAuthException catch (e) {
-        print('Firebase Auth Error: ${e.code}'); // For debugging
+        print('Firebase Auth Error: ${e.code}');
 
         if (!mounted) return;
 
@@ -218,7 +216,7 @@ class _SignUpPageState extends State<SignUpPage> {
           password: _passwordController.text.trim(),
         );
 
-        // Initialize user data in Firestore
+        // Initialize user data in Firestore - MODIFIED
         await FirebaseFirestore.instance
             .collection('users')
             .doc(userCredential.user!.uid)
@@ -226,18 +224,17 @@ class _SignUpPageState extends State<SignUpPage> {
           'uid': userCredential.user!.uid,
           'name': _nameController.text.trim(),
           'email': _emailController.text.trim(),
-          'virtualNEARBalance': 1000,
-          'virtualStNEARBalance': 0,
           'totalRewardsEarned': 0,
           'apy': 0,
           'performanceHistory': [],
           'transactions': [],
           'pendingUnstakes': [],
+          'stakedNEARBalance': 0,
+          'availableNEARBalance': 1000,
         });
 
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-              builder: (context) => const DashboardPage()), // Update navigation
+          MaterialPageRoute(builder: (context) => const DashboardPage()),
           (Route<dynamic> route) => false,
         );
       } on FirebaseAuthException catch (e) {

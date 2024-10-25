@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'account.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -10,28 +14,124 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  List<Map<String, dynamic>> stakes = [
-    {
-      'validator': 'Meta Pool Validator',
-      'amount': 50000,
-      'apy': 13.2,
-      'status': 'Active',
-      'startDate': DateTime.now().subtract(const Duration(days: 30)),
-    },
-    {
-      'validator': 'Near Foundation',
-      'amount': 75000,
-      'apy': 11.8,
-      'status': 'Active',
-      'startDate': DateTime.now().subtract(const Duration(days: 60)),
-    },
-  ];
+  List<Map<String, dynamic>> stakes = [];
+
+  double stNearNearExchangeRate = 1.0;
+  double stNearUsdPrice = 1.0;
+  double apy = 0.12; // Fixed APY of 12%
+  double nearUsdPrice = 1.0; // Added NEAR to USD exchange rate
+
+  Future<void> _fetchExchangeRates() async {
+    try {
+      final nearResponse = await http.get(Uri.parse(
+          'https://validators.narwallets.com/metrics/price/stnear-near'));
+      final usdResponse = await http.get(Uri.parse(
+          'https://validators.narwallets.com/metrics/price/stnear-usd'));
+
+      if (nearResponse.statusCode == 200 && usdResponse.statusCode == 200) {
+        // Parse the response body differently based on its type
+        dynamic nearData = jsonDecode(nearResponse.body);
+        dynamic usdData = jsonDecode(usdResponse.body);
+
+        setState(() {
+          // Convert the data to double, handling different possible formats
+          stNearNearExchangeRate = _parseToDouble(nearData);
+          stNearUsdPrice = _parseToDouble(usdData);
+          nearUsdPrice =
+              stNearUsdPrice / stNearNearExchangeRate; // Update nearUsdPrice
+        });
+      } else {
+        // Handle error - show a snackbar or log the error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Error fetching exchange rates: ${nearResponse.statusCode} ${usdResponse.statusCode}')),
+        );
+        print('Error fetching exchange rates');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error fetching exchange rates: $e')));
+      print('Error fetching exchange rates: $e');
+    }
+  }
+
+// Helper function to parse different data types to double
+  double _parseToDouble(dynamic value) {
+    if (value is double) {
+      return value;
+    } else if (value is int) {
+      return value.toDouble();
+    } else if (value is String) {
+      return double.parse(value);
+    } else {
+      throw FormatException('Unable to parse value to double: $value');
+    }
+  }
+
+  Map<String, dynamic>? userData;
+  bool isLoading = true;
+
+  Future<void> _fetchUserData() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final userDataSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        setState(() {
+          userData = userDataSnapshot.data();
+          isLoading = false;
+        });
+      } else {
+        // Handle the case where the user is not logged in
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      // Handle errors appropriately
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error fetching user data: $e')));
+      print('Error fetching user data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchExchangeRates();
+    _fetchUserData();
+  }
 
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color.fromRGBO(206, 255, 26, 1);
     const backgroundColor = Color.fromRGBO(13, 43, 51, 1);
     const accentColor = Color.fromRGBO(26, 255, 206, 1);
+
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (userData == null) {
+      return const Scaffold(
+        body: Center(child: Text('User data not found')),
+      );
+    }
+
+    final totalStakedNear = userData!['stakedNEARBalance'] as num? ?? 0;
+    final totalRewardsEarned = userData!['totalRewardsEarned'] as num? ?? 0;
+    final availableNear = userData!['availableNEARBalance'] as num? ?? 0;
+    // Updated Calculation for totalPortfolioValue
+    final totalPortfolioValue = totalStakedNear.toDouble() * stNearUsdPrice +
+        (availableNear + totalRewardsEarned).toDouble() * nearUsdPrice;
 
     return Scaffold(
       appBar: AppBar(
@@ -68,7 +168,8 @@ class _DashboardPageState extends State<DashboardPage> {
         child: RefreshIndicator(
           color: primaryColor,
           onRefresh: () async {
-            // Implement refresh logic
+            await _fetchExchangeRates();
+            await _fetchUserData();
           },
           child: ListView(
             padding: const EdgeInsets.all(16),
@@ -78,18 +179,18 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   Expanded(
                     child: _buildQuickStatCard(
-                      'Total Staked',
-                      '${NumberFormat.compact().format(stakes.fold(0.0, (sum, stake) => sum + (stake['amount'] as num).toDouble()))} NEAR',
-                      Icons.account_balance,
+                      'Total Portfolio Value',
+                      '\$${totalPortfolioValue.toStringAsFixed(2)}',
+                      Icons.account_balance_wallet,
                       primaryColor,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildQuickStatCard(
-                      'Total Rewards',
-                      '${NumberFormat.compact().format(_calculateTotalRewards())} NEAR',
-                      Icons.stars,
+                      'Total Staked NEAR',
+                      '${NumberFormat.compact().format(totalStakedNear)} NEAR',
+                      Icons.stacked_line_chart,
                       accentColor,
                     ),
                   ),
@@ -100,31 +201,33 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   Expanded(
                     child: _buildQuickStatCard(
-                      'Average APY',
-                      '${_calculateAverageAPY().toStringAsFixed(2)}%',
-                      Icons.trending_up,
+                      'Rewards Earned',
+                      '${NumberFormat.compact().format(totalRewardsEarned)} NEAR',
+                      Icons.currency_exchange,
                       primaryColor,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildQuickStatCard(
-                      'Daily Earnings',
-                      '${_calculateDailyEarnings().toStringAsFixed(2)} NEAR',
-                      Icons.calendar_today,
+                      'Available NEAR',
+                      '${NumberFormat.compact().format(availableNear)} NEAR',
+                      Icons.account_balance_wallet,
                       accentColor,
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+              _buildExchangeRateCard('1 NEAR =', nearUsdPrice, accentColor),
 
               // Stakes List Section
               const SizedBox(height: 24),
               _buildSectionTitle('Active Stakes', primaryColor),
               ...stakes.map((stake) => _buildStakeCard(
                     stake['validator'],
-                    '${NumberFormat.compact().format(stake['amount'])} NEAR',
-                    '${stake['apy']}%',
+                    stake['amount'],
+                    stake['apy'].toDouble(),
                     stake['status'],
                     primaryColor,
                     accentColor,
@@ -132,11 +235,6 @@ class _DashboardPageState extends State<DashboardPage> {
             ],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: primaryColor,
-        onPressed: _showAddStakeDialog,
-        child: const Icon(Icons.add, color: backgroundColor),
       ),
     );
   }
@@ -184,7 +282,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildStakeCard(String validator, String amount, String apy,
+  Widget _buildStakeCard(String validator, num amount, double apy,
       String status, Color primaryColor, Color accentColor) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -235,7 +333,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   Text(
-                    amount,
+                    NumberFormat.compact().format(amount),
                     style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ],
@@ -248,7 +346,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   Text(
-                    apy,
+                    apy.toStringAsFixed(2),
                     style: TextStyle(color: primaryColor, fontSize: 16),
                   ),
                 ],
@@ -286,7 +384,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   double _calculateTotalRewards() {
-    return stakes.fold(0.0, (sum, stake) {
+    return stakes.fold<double>(0.0, (sum, stake) {
       final daysStaked =
           DateTime.now().difference(stake['startDate'] as DateTime).inDays;
       return sum +
@@ -300,13 +398,13 @@ class _DashboardPageState extends State<DashboardPage> {
 
   double _calculateAverageAPY() {
     if (stakes.isEmpty) return 0;
-    return stakes.fold(
+    return stakes.fold<double>(
             0.0, (sum, stake) => sum + (stake['apy'] as num).toDouble()) /
         stakes.length;
   }
 
   double _calculateDailyEarnings() {
-    return stakes.fold(
+    return stakes.fold<double>(
         0.0,
         (sum, stake) =>
             sum +
@@ -316,76 +414,29 @@ class _DashboardPageState extends State<DashboardPage> {
                 365));
   }
 
-  void _showAddStakeDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        String validator = '';
-        double amount = 0;
-        double apy = 0;
-        DateTime startDate = DateTime.now();
-
-        return AlertDialog(
-          title: const Text('Add New Stake'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                decoration: const InputDecoration(labelText: 'Validator'),
-                onChanged: (value) => validator = value,
-              ),
-              TextField(
-                decoration: const InputDecoration(labelText: 'Amount (NEAR)'),
-                keyboardType: TextInputType.number,
-                onChanged: (value) => amount = double.tryParse(value) ?? 0,
-              ),
-              TextField(
-                decoration: const InputDecoration(labelText: 'APY (%)'),
-                keyboardType: TextInputType.number,
-                onChanged: (value) => apy = double.tryParse(value) ?? 0,
-              ),
-              TextButton(
-                child: Text(
-                    'Start Date: ${DateFormat('yyyy-MM-dd').format(startDate)}'),
-                onPressed: () async {
-                  final DateTime? picked = await showDatePicker(
-                    context: context,
-                    initialDate: startDate,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime.now(),
-                  );
-                  if (picked != null && picked != startDate) {
-                    setState(() {
-                      startDate = picked;
-                    });
-                  }
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
+  Widget _buildExchangeRateCard(String title, double rate, Color color) {
+    return Card(
+      color: Colors.black12,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: TextStyle(color: color, fontSize: 16),
             ),
-            TextButton(
-              child: const Text('Add'),
-              onPressed: () {
-                setState(() {
-                  stakes.add({
-                    'validator': validator,
-                    'amount': amount,
-                    'apy': apy,
-                    'status': 'Active',
-                    'startDate': startDate,
-                  });
-                });
-                Navigator.of(context).pop();
-              },
+            Text(
+              '\$${rate.toStringAsFixed(4)}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
