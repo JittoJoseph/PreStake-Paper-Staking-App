@@ -140,7 +140,8 @@ class AccountPage extends StatelessWidget {
         _buildDetailRow('Name', name, accentColor),
         _buildDetailRow('Email', email, accentColor),
         _buildDetailRow('Joined', joinDate, accentColor),
-        _buildDetailRow('NEAR Balance', vNearBalance.toString(), accentColor),
+        _buildDetailRow(
+            'NEAR Balance', vNearBalance.toStringAsFixed(2), accentColor),
       ],
     );
   }
