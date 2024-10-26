@@ -131,7 +131,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final totalStakedNear = userData!['stakedNEARBalance'] as num? ?? 0;
     final totalRewardsEarned = userData!['totalRewardsEarned'] as num? ?? 0;
     final availableNear = userData!['availableNEARBalance'] as num? ?? 0;
-    final totalPortfolioValue = totalStakedNear.toDouble() * stNearUsdPrice +
+    final totalPortfolioValue = totalStakedNear.toDouble() * nearUsdPrice +
         (availableNear + totalRewardsEarned).toDouble() * nearUsdPrice;
 
     return Scaffold(
@@ -276,19 +276,36 @@ class _DashboardPageState extends State<DashboardPage> {
     print("Building stakes list. Stakes length: ${stakes.length}");
     if (stakes.isEmpty) {
       return [
-        const Center(child: Text('No active stakes')),
+        Container(
+          height: MediaQuery.of(context).size.height * 0.3,
+          alignment: Alignment.center,
+          child: const Text(
+            'No active stakes',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+            ),
+          ),
+        ),
       ];
     }
 
     return stakes.map((stake) {
       print("Processing stake: $stake");
-      if (stake['amount'] == null || stake['rewards'] == null) {
+      if (stake['amount'] == null) {
         return const SizedBox.shrink();
       }
 
-      // Convert Timestamp to DateTime
+      // Calculate rewards based on time elapsed
       final Timestamp timestamp = stake['timestamp'] as Timestamp;
       final DateTime stakeDate = timestamp.toDate();
+      final Duration timeElapsed = DateTime.now().difference(stakeDate);
+      final double daysElapsed = timeElapsed.inHours / 24;
+
+      // Calculate rewards using APY (assuming 12% APY)
+      final double stakeAmount = (stake['amount'] as num).toDouble();
+      final double calculatedRewards = stakeAmount * (apy / 365) * daysElapsed;
+
       final formattedDate = DateFormat('MMM d, yyyy').format(stakeDate);
 
       return Container(
@@ -332,7 +349,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '+${stake['rewards'].toStringAsFixed(2)} NEAR',
+                      '+${calculatedRewards.toStringAsFixed(2)} NEAR', // Using calculated rewards
                       style: const TextStyle(
                         color: AppColors.accentColor,
                         fontSize: 16,
@@ -467,8 +484,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   Text(
-                    NumberFormat.compact()
-                        .format(amount * stNearNearExchangeRate),
+                    NumberFormat.compact().format(amount /
+                        stNearNearExchangeRate), // Now converts NEAR to stNEAR
                     style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ],
@@ -495,14 +512,12 @@ class _DashboardPageState extends State<DashboardPage> {
 
   double _calculateTotalRewards() {
     return stakes.fold<double>(0.0, (sum, stake) {
-      final daysStaked =
-          DateTime.now().difference(stake['startDate'] as DateTime).inDays;
-      return sum +
-          ((stake['amount'] as num).toDouble() *
-              (stake['apy'] as num).toDouble() /
-              100 /
-              365 *
-              daysStaked);
+      final Timestamp timestamp = stake['timestamp'] as Timestamp;
+      final DateTime stakeDate = timestamp.toDate();
+      final Duration timeElapsed = DateTime.now().difference(stakeDate);
+      final double daysElapsed = timeElapsed.inHours / 24;
+      final double stakeAmount = (stake['amount'] as num).toDouble();
+      return sum + (stakeAmount * (apy / 365) * daysElapsed);
     });
   }
 
@@ -566,11 +581,11 @@ class _DashboardPageState extends State<DashboardPage> {
       try {
         // Create the simplified stake transaction
         final stakeTransaction = {
-          'amountNear': amountToStake,
-          'timestamp': Timestamp.now(), // Use server timestamp
+          'amountNear': amountToStake, // This is now correct as NEAR
+          'timestamp': Timestamp.now(),
           'type': 'stake',
-          'rewards': 0.0, // Initial rewards are 0
-          'state': 'active', // Add state field
+          'rewards': 0.0,
+          'state': 'active',
         };
 
         await FirebaseFirestore.instance
@@ -582,7 +597,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   amountToStake,
           'stakedNEARBalance':
               (userData!['stakedNEARBalance'] as num).toDouble() +
-                  amountToStake,
+                  amountToStake, // Now correct as we're storing in NEAR
           'transactions': FieldValue.arrayUnion([stakeTransaction]),
         });
 
