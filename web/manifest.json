@@ -1,6 +1,6 @@
 {
-    "name": "stakingnotify",
-    "short_name": "stakingnotify",
+    "name": "prestake",
+    "short_name": "prestake",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
