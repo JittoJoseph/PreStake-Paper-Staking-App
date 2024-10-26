@@ -5,7 +5,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// Color scheme constants
 class AppColors {
   static const primaryColor = Color.fromRGBO(206, 255, 26, 1); // Neon Green
   static const backgroundColor = Color.fromRGBO(13, 43, 51, 1); // Dark Teal
@@ -17,11 +16,7 @@ class AppColors {
   static const primaryColourDim = Color.fromRGBO(205, 255, 26, 0.849);
 }
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+void main() {
   runApp(const StakeRewardsApp());
 }
 
@@ -30,41 +25,64 @@ class StakeRewardsApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'NEAR Paper Wallet',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: AppColors.primaryColor,
-        scaffoldBackgroundColor: AppColors.backgroundColor,
-        textTheme: Theme.of(context).textTheme.apply(
-              bodyColor: AppColors.textColorPrimary,
-              displayColor: AppColors.textColorPrimary,
-            ),
-        // Additional theme settings
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryColor,
-            foregroundColor: AppColors.backgroundColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25),
-            ),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          labelStyle: const TextStyle(color: AppColors.textColorSecondary),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(25),
-            borderSide: const BorderSide(color: AppColors.accentColor),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(25),
-            borderSide: const BorderSide(color: AppColors.primaryColor),
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        ),
+    return FutureBuilder(
+      future: Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
       ),
-      home: const AuthWrapper(),
+      builder: (context, snapshot) {
+        // Show splash screen while Firebase initializes
+        if (snapshot.connectionState != ConnectionState.done) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Container(
+              color: AppColors.backgroundColor,
+              child: const Center(
+                child: CircularProgressIndicator(
+                  valueColor:
+                      AlwaysStoppedAnimation<Color>(AppColors.primaryColor),
+                ),
+              ),
+            ),
+          );
+        }
+
+        // Once Firebase is initialized, return the main app
+        return MaterialApp(
+          title: 'PreStake',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            primaryColor: AppColors.primaryColor,
+            scaffoldBackgroundColor: AppColors.backgroundColor,
+            textTheme: Theme.of(context).textTheme.apply(
+                  bodyColor: AppColors.textColorPrimary,
+                  displayColor: AppColors.textColorPrimary,
+                ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryColor,
+                foregroundColor: AppColors.backgroundColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+              ),
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              labelStyle: const TextStyle(color: AppColors.textColorSecondary),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(25),
+                borderSide: const BorderSide(color: AppColors.accentColor),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(25),
+                borderSide: const BorderSide(color: AppColors.primaryColor),
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            ),
+          ),
+          home: const AuthWrapper(),
+        );
+      },
     );
   }
 }
@@ -77,27 +95,16 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            backgroundColor: AppColors.backgroundColor,
-            body: Center(
-              child: CircularProgressIndicator(
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(AppColors.primaryColor),
-              ),
-            ),
-          );
-        } else if (snapshot.hasData) {
+        // Don't show loading indicator here anymore
+        if (snapshot.hasData) {
           return const DashboardPage();
-        } else {
-          return const LoginScreen();
         }
+        return const LoginScreen();
       },
     );
   }
 }
 
-// Keep your existing LoginScreen class from the previous main.dart
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
@@ -127,7 +134,7 @@ class LoginScreen extends StatelessWidget {
                           size: 80, color: AppColors.primaryColor),
                       const SizedBox(height: 24),
                       const Text(
-                        'Welcome to Paper Wallet',
+                        'Welcome to PreStake',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,

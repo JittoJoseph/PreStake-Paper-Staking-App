@@ -27,8 +27,9 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/app_icon.png"
-  remove_alpha_ios: true
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "transparent"
+  remove_alpha_ios: false
 
 flutter:
   uses-material-design: true
