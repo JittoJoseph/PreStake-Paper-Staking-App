@@ -132,7 +132,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final totalRewardsEarned = userData!['totalRewardsEarned'] as num? ?? 0;
     final availableNear = userData!['availableNEARBalance'] as num? ?? 0;
     final totalPortfolioValue = totalStakedNear.toDouble() * nearUsdPrice +
-        (availableNear + totalRewardsEarned).toDouble() * nearUsdPrice;
+        availableNear.toDouble() * nearUsdPrice;
 
     return Scaffold(
       appBar: AppBar(
@@ -651,7 +651,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              Text('Available NEAR: ${userData?['availableNEARBalance'] ?? 0}',
+              Text(
+                  'Available NEAR: ${userData?['availableNEARBalance']?.toStringAsFixed(2) ?? 0}',
                   style: const TextStyle(color: AppColors.textColorPrimary)),
               const SizedBox(height: 16),
               Row(
@@ -796,11 +797,8 @@ class _DashboardPageState extends State<DashboardPage> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
-        // Get current transactions
         final List<dynamic> currentTransactions =
             List.from(userData?['transactions'] ?? []);
-
-        // Sort active stake transactions by timestamp (oldest first)
         final activeStakes = currentTransactions
             .where((t) => t['type'] == 'stake' && t['state'] == 'active')
             .toList()
@@ -808,6 +806,8 @@ class _DashboardPageState extends State<DashboardPage> {
               .compareTo(b['timestamp'] as Timestamp));
 
         double remainingAmountToUnstake = amountToUnstake;
+        double totalRewardsFromUnstake =
+            0.0; // Track rewards from this unstake operation
         List<Map<String, dynamic>> updatedTransactions = [];
 
         // Process stakes from oldest to newest
@@ -815,38 +815,55 @@ class _DashboardPageState extends State<DashboardPage> {
           if (remainingAmountToUnstake <= 0) break;
 
           final stakeAmount = stake['amountNear'] as num;
+          final Timestamp stakeTimestamp = stake['timestamp'] as Timestamp;
+
+          // Calculate rewards for this stake
+          final Duration timeElapsed =
+              DateTime.now().difference(stakeTimestamp.toDate());
+          final double daysElapsed = timeElapsed.inHours / 24;
+          final double stakeRewards = stakeAmount * (apy / 365) * daysElapsed;
+
           if (stakeAmount <= remainingAmountToUnstake) {
-            // Fully unstake this stake
+            // Fully unstake
             stake['state'] = 'inactive';
             remainingAmountToUnstake -= stakeAmount;
+            totalRewardsFromUnstake += stakeRewards; // Add all rewards
           } else {
             // Partially unstake
             final newStakeAmount = stakeAmount - remainingAmountToUnstake;
             stake['amountNear'] = newStakeAmount;
 
-            // Create a record for the unstaked portion
+            // Calculate partial rewards based on unstake proportion
+            final double partialRewards =
+                stakeRewards * (remainingAmountToUnstake / stakeAmount);
+            totalRewardsFromUnstake += partialRewards;
+
+            // Create unstake transaction record
             final unstakeTransaction = {
               'amountNear': remainingAmountToUnstake,
               'timestamp': Timestamp.now(),
               'type': 'unstake',
               'state': 'completed',
-              'rewards':
-                  stake['rewards'] * (remainingAmountToUnstake / stakeAmount),
+              'rewards': partialRewards,
             };
             updatedTransactions.add(unstakeTransaction);
             remainingAmountToUnstake = 0;
           }
         }
 
-        // Update Firestore
+        // Update Firestore with new balances and rewards
         await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .update({
-          'availableNEARBalance':
-              (userData!['availableNEARBalance'] as num).toDouble() +
-                  amountToUnstake,
+          'availableNEARBalance': (userData!['availableNEARBalance'] as num)
+                  .toDouble() +
+              amountToUnstake +
+              totalRewardsFromUnstake, // Add both unstaked amount and rewards
           'stakedNEARBalance': totalStaked - amountToUnstake,
+          'totalRewardsEarned':
+              (userData!['totalRewardsEarned'] as num).toDouble() +
+                  totalRewardsFromUnstake, // Update total rewards tracker
           'transactions': [...currentTransactions, ...updatedTransactions],
         });
 
@@ -857,7 +874,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Successfully unstaked $amountToUnstake NEAR')),
+              content: Text(
+                  'Successfully unstaked $amountToUnstake NEAR + ${totalRewardsFromUnstake.toStringAsFixed(2)} NEAR in rewards')),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(

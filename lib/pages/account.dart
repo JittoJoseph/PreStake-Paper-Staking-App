@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../main.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+
+// Import AppColors from main.dart since they're used in the code
+import '../main.dart';
 
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
@@ -10,9 +12,9 @@ class AccountPage extends StatelessWidget {
   Future<void> _logout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
     if (!context.mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
+
+    // Instead of pushing to LoginScreen, pop until we reach the root
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   Future<Map<String, dynamic>> _getUserData() async {
@@ -29,20 +31,17 @@ class AccountPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color.fromRGBO(206, 255, 26, 1);
-    const backgroundColor = Color.fromRGBO(13, 43, 51, 1);
-    const accentColor = Color.fromRGBO(26, 255, 206, 1);
-
+    // Use AppColors instead of hardcoded colors
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: backgroundColor,
+        backgroundColor: AppColors.backgroundColor,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: primaryColor),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primaryColor),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'Account',
-          style: TextStyle(color: primaryColor),
+          style: TextStyle(color: AppColors.primaryColor),
         ),
       ),
       body: Container(
@@ -50,7 +49,10 @@ class AccountPage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [backgroundColor, backgroundColor.withOpacity(0.8)],
+            colors: [
+              AppColors.backgroundColor,
+              AppColors.backgroundColor.withOpacity(0.8)
+            ],
           ),
         ),
         child: FutureBuilder<Map<String, dynamic>>(
@@ -74,36 +76,37 @@ class AccountPage extends StatelessWidget {
                     const Center(
                       child: CircleAvatar(
                         radius: 50,
-                        backgroundColor: primaryColor,
+                        backgroundColor: AppColors.primaryColor,
                         child: Icon(
                           Icons.account_circle,
                           size: 80,
-                          color: backgroundColor,
+                          color: AppColors.backgroundColor,
                         ),
                       ),
                     ),
                     const SizedBox(height: 24),
                     _buildAccountDetails(
-                      primaryColor,
-                      accentColor,
+                      AppColors.primaryColor,
+                      AppColors.accentColor,
                       userData['name'] ?? 'N/A',
                       user?.email ?? 'N/A',
                       DateFormat('MMMM dd, yyyy').format(joinDate),
                       userData['availableNEARBalance'] ?? 0,
-                      userData['stakedNEARBalance'] ?? 0,
                     ),
                     const SizedBox(height: 24),
-                    _buildSettingsSection(primaryColor, accentColor),
+                    _buildSettingsSection(
+                        AppColors.primaryColor, AppColors.accentColor),
                     const SizedBox(height: 24),
                     Center(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
-                          foregroundColor: accentColor,
+                          foregroundColor: AppColors.accentColor,
                           minimumSize: const Size(200, 50),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
-                            side: const BorderSide(color: accentColor),
+                            side:
+                                const BorderSide(color: AppColors.accentColor),
                           ),
                         ),
                         onPressed: () => _logout(context),
@@ -120,14 +123,8 @@ class AccountPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountDetails(
-      Color primaryColor,
-      Color accentColor,
-      String name,
-      String email,
-      String joinDate,
-      int vNearBalance,
-      int vStNearBalance) {
+  Widget _buildAccountDetails(Color primaryColor, Color accentColor,
+      String name, String email, String joinDate, num vNearBalance) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -144,8 +141,6 @@ class AccountPage extends StatelessWidget {
         _buildDetailRow('Email', email, accentColor),
         _buildDetailRow('Joined', joinDate, accentColor),
         _buildDetailRow('NEAR Balance', vNearBalance.toString(), accentColor),
-        _buildDetailRow(
-            'stNEAR Balance', vStNearBalance.toString(), accentColor),
       ],
     );
   }
