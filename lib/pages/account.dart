@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-
-// Import AppColors from main.dart since they're used in the code
 import '../main.dart';
 
 class AccountPage extends StatelessWidget {
@@ -198,9 +196,7 @@ class AccountPage extends StatelessWidget {
           ),
           Switch(
             value: value,
-            onChanged: (newValue) {
-              // TODO: Implement settings change logic
-            },
+            onChanged: (newValue) {},
             activeColor: accentColor,
             activeTrackColor: accentColor.withOpacity(0.5),
             inactiveThumbColor: Colors.grey,
