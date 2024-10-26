@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "stakingnotify" "\0"
+            VALUE "FileDescription", "prestake" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "stakingnotify" "\0"
+            VALUE "InternalName", "prestake" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2024 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "stakingnotify.exe" "\0"
-            VALUE "ProductName", "stakingnotify" "\0"
+            VALUE "OriginalFilename", "prestake.exe" "\0"
+            VALUE "ProductName", "prestake" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

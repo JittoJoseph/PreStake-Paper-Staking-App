@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.stakingnotify.app"
+    namespace = "com.prestake.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.stakingnotify.app"
+        applicationId = "com.prestake.app"
         minSdk 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
