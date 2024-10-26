@@ -1,4 +1,4 @@
-name: prestake
+name: stakingnotify
 description: "A paper staking app for simulating NEAR operations."
 publish_to: 'none'
 
