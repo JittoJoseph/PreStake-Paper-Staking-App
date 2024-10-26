@@ -47,12 +47,10 @@ class _DashboardPageState extends State<DashboardPage> {
               content: Text(
                   'Error fetching exchange rates: ${nearResponse.statusCode} ${usdResponse.statusCode}')),
         );
-        print('Error fetching exchange rates');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error fetching exchange rates: $e')));
-      print('Error fetching exchange rates: $e');
     }
   }
 
@@ -84,14 +82,12 @@ class _DashboardPageState extends State<DashboardPage> {
           isLoading = false;
         });
         _updateStakesList(); // Make sure this is being called
-        print("fetchUserData completed. userData: $userData"); // Debug print
       } else {
         setState(() {
           isLoading = false;
         });
       }
     } catch (e) {
-      print("Error in fetchUserData: $e"); // Debug print
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error fetching user data: $e')));
       setState(() {
@@ -274,7 +270,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   List<Widget> _buildStakesList() {
-    print("Building stakes list. Stakes length: ${stakes.length}");
     if (stakes.isEmpty) {
       return [
         Container(
@@ -292,7 +287,6 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     return stakes.map((stake) {
-      print("Processing stake: $stake");
       if (stake['amount'] == null) {
         return const SizedBox.shrink();
       }
@@ -520,35 +514,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  double _calculateTotalRewards() {
-    return stakes.fold<double>(0.0, (sum, stake) {
-      final Timestamp timestamp = stake['timestamp'] as Timestamp;
-      final DateTime stakeDate = timestamp.toDate();
-      final Duration timeElapsed = DateTime.now().difference(stakeDate);
-      final double daysElapsed = timeElapsed.inHours / 24;
-      final double stakeAmount = (stake['amount'] as num).toDouble();
-      return sum + (stakeAmount * (apy / 365) * daysElapsed);
-    });
-  }
-
-  double _calculateAverageAPY() {
-    if (stakes.isEmpty) return 0;
-    return stakes.fold<double>(
-            0.0, (sum, stake) => sum + (stake['apy'] as num).toDouble()) /
-        stakes.length;
-  }
-
-  double _calculateDailyEarnings() {
-    return stakes.fold<double>(
-        0.0,
-        (sum, stake) =>
-            sum +
-            ((stake['amount'] as num).toDouble() *
-                (stake['apy'] as num).toDouble() /
-                100 /
-                365));
-  }
-
   Widget _buildExchangeRateCard(String title, double rate, Color color) {
     return Card(
       color: Colors.black12,
@@ -703,7 +668,6 @@ class _DashboardPageState extends State<DashboardPage> {
           .then((value) {
         final transactions =
             value.data()?['transactions'] as List<dynamic>? ?? [];
-        print("Raw transactions from Firestore: $transactions");
 
         final stakeTransactions = transactions
             .where((transaction) =>
@@ -716,11 +680,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   'state': transaction['state'],
                 })
             .toList();
-        print("Processed stake transactions: $stakeTransactions");
 
         setState(() {
           stakes = stakeTransactions;
-          print("Stakes array after setState: $stakes");
         });
       });
     }

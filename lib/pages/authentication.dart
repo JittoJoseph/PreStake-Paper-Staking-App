@@ -45,8 +45,6 @@ class _SignInPageState extends State<SignInPage> {
           );
         }
       } on FirebaseAuthException catch (e) {
-        print('Firebase Auth Error: ${e.code}');
-
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
