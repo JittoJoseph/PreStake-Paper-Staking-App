@@ -44,7 +44,7 @@ class _SignInPageState extends State<SignInPage> {
             (Route<dynamic> route) => false,
           );
         }
-      } on FirebaseAuthException catch (e) {
+      } on FirebaseAuthException {
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
