@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:stakingnotify/main.dart';
+import 'package:prestake/main.dart';
 import 'account.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
