@@ -229,6 +229,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         '1 NEAR =', nearUsdPrice, AppColors.accentColor),
                     const SizedBox(height: 24),
                     _buildSectionTitle('Active Stakes', AppColors.primaryColor),
+                    const SizedBox(height: 16),
                     ..._buildStakesList(),
                   ],
                 ),
@@ -336,6 +337,14 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
+                      '${NumberFormat.compact().format(stake['amount'] / stNearNearExchangeRate)} stNEAR',
+                      style: const TextStyle(
+                        color: AppColors.primaryColourDim,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
                       'Staked on $formattedDate',
                       style: const TextStyle(
                         color: Colors.white70,
@@ -348,15 +357,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      '+${calculatedRewards.toStringAsFixed(2)} NEAR', // Using calculated rewards
-                      style: const TextStyle(
-                        color: AppColors.accentColor,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
                     const Text(
                       'Rewards',
                       style: TextStyle(
@@ -364,26 +364,36 @@ class _DashboardPageState extends State<DashboardPage> {
                         fontSize: 14,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '+${calculatedRewards.toStringAsFixed(2)} NEAR',
+                      style: const TextStyle(
+                        color: AppColors.accentColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (stake['state'] == 'active')
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'Active',
+                          style: TextStyle(
+                            color: AppColors.accentColor,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ],
-            ),
-            if (stake['state'] == 'active')
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.accentColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  'Active',
-                  style: TextStyle(
-                    color: AppColors.accentColor,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
+            )
           ],
         ),
       );

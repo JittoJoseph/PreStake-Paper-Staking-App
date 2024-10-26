@@ -14,6 +14,7 @@ class AppColors {
   // Add additional colors as needed
   static const textColorPrimary = Colors.white;
   static const textColorSecondary = Colors.white70;
+  static const primaryColourDim = Color.fromRGBO(205, 255, 26, 0.849);
 }
 
 void main() async {
