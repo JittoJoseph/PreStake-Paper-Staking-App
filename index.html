@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>App Demo Preview</title>
+	<style>
+		:root {
+			--page-bg: rgb(22, 22, 32);
+			--page-accent1: rgb(28, 28, 42);
+			--page-accent2: rgb(18, 18, 28);
+			--phone-frame: #262626;
+			--phone-border: #333333;
+		}
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			background: var(--page-bg);
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+			position: relative;
+			overflow: hidden;
+		}
+
+		body::before {
+			content: '';
+			position: fixed;
+			width: 150%;
+			height: 150%;
+			top: -25%;
+			left: -25%;
+			background:
+				radial-gradient(circle at 20% 20%, var(--page-accent1) 0%, transparent 50%),
+				radial-gradient(circle at 80% 80%, var(--page-accent2) 0%, transparent 40%);
+			z-index: 0;
+		}
+
+		.container {
+			position: relative;
+			z-index: 1;
+			padding: 20px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			width: 100%;
+			height: 100vh;
+			box-sizing: border-box;
+		}
+
+		.phone-frame {
+			background: var(--phone-frame);
+			border-radius: 50px;
+			padding: 15px;
+			box-shadow:
+				0 0 0 1px var(--phone-border),
+				0 20px 40px rgba(0, 0, 0, 0.5),
+				0 0 80px rgba(0, 0, 0, 0.3);
+			position: relative;
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			width: min(calc(100vw - 40px), calc((100vh - 40px) * 0.4618));
+			transform-origin: center;
+		}
+
+		.phone-frame::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			border-radius: 50px;
+			background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 80%);
+			pointer-events: none;
+		}
+
+		.screen {
+			position: relative;
+			background: white;
+			border-radius: 40px;
+			overflow: hidden;
+			aspect-ratio: 375 / 812;
+			width: 100%;
+			height: auto;
+			border: 1px solid rgba(255, 255, 255, 0.1);
+		}
+
+		.notch {
+			background: var(--phone-frame);
+			width: 150px;
+			height: 25px;
+			border-radius: 0 0 20px 20px;
+			position: absolute;
+			left: 50%;
+			transform: translateX(-50%);
+			top: 15px;
+			z-index: 2;
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			border-top: none;
+		}
+
+		iframe {
+			width: 100%;
+			height: 100%;
+			border: none;
+			position: absolute;
+			top: 0;
+			left: 0;
+		}
+
+		.power-button {
+			position: absolute;
+			right: -2px;
+			top: 100px;
+			width: 3px;
+			height: 50px;
+			background: #404040;
+			border-radius: 2px;
+			box-shadow: -1px 0 2px rgba(0, 0, 0, 0.3);
+		}
+
+		.volume-button {
+			position: absolute;
+			left: -2px;
+			top: 100px;
+			width: 3px;
+			height: 50px;
+			background: #404040;
+			border-radius: 2px;
+			box-shadow: 1px 0 2px rgba(0, 0, 0, 0.3);
+		}
+
+		.volume-button.down {
+			top: 160px;
+		}
+
+		.side-detail {
+			position: absolute;
+			width: 2px;
+			height: 40px;
+			background: rgba(255, 255, 255, 0.1);
+			right: -6px;
+			top: 200px;
+			border-radius: 1px;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<div class="phone-frame">
+			<div class="notch"></div>
+			<div class="power-button"></div>
+			<div class="volume-button"></div>
+			<div class="volume-button down"></div>
+			<div class="side-detail"></div>
+			<div class="screen">
+				<iframe src="YOUR_FLUTTER_APP_URL_HERE"></iframe>
+			</div>
+		</div>
+	</div>
+</body>
+
+</html>
