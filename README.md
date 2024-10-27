@@ -6,6 +6,10 @@
 
 PreStake is a Flutter-based mobile application that simulates NEAR Protocol staking operations. It provides a risk-free environment for users to learn and experiment with NEAR staking strategies through paper trading.
 
+## Demo
+
+You can try the Android version of the app by downloading it from [GitHub Releases](https://github.com/JittoJoseph/PreStake-Paper-Staking-App/releases/tag/stable).
+
 ## Features
 
 ### Authentication
@@ -43,6 +47,21 @@ PreStake is a Flutter-based mobile application that simulates NEAR Protocol stak
   - Available tokens
   - Accumulated rewards
 
+## Technical Stack
+
+- **Frontend Framework**: Flutter
+- **Backend Services**: Firebase
+  - Authentication: Firebase Auth
+  - Database: Cloud Firestore
+  - Analytics: Firebase Analytics
+- **State Management**: Provider
+- **API Integration**: Meta pool sdk  Analytics API endpoints
+- **Development Tools**:
+  - Android Studio
+  - VS Code
+  - Flutter DevTools
+- **Version Control**: Git
+
 ## Project Setup
 
 ### Prerequisites
@@ -70,16 +89,6 @@ flutter pub get
 ```bash
 flutter run
 ```
-
-## Contributing
-
-We welcome contributions to PreStake! Please feel free to submit issues and pull requests.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
 ## License
 
