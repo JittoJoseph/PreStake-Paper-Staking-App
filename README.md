@@ -8,8 +8,8 @@ PreStake is a Flutter-based mobile application that simulates NEAR Protocol stak
 
 ## Demo
 
-You can try the Android version of the app by downloading it from [GitHub Releases](https://github.com/JittoJoseph/PreStake-Paper-Staking-App/releases/tag/stable).
-you can also watch the demo video from [youtube](https://youtu.be/zHXnevURYHk)
+- You can try the Android version of the app by downloading it from [GitHub Releases](https://github.com/JittoJoseph/PreStake-Paper-Staking-App/releases/tag/stable).
+- you can also watch the [demo video](https://youtu.be/zHXnevURYHk) from youtube
 
 ## Features
 
