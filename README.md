@@ -2,8 +2,6 @@
 
 <img src="assets/icon/app_icon.png" alt="PreStake Logo" width="150"/>
 
-
-
 PreStake is a Flutter-based mobile application that simulates NEAR Protocol staking operations. It provides a risk-free environment for users to learn and experiment with NEAR staking strategies through paper trading.
 
 ## Demo
@@ -39,6 +37,7 @@ PreStake is a Flutter-based mobile application that simulates NEAR Protocol stak
   - Current average APY
 - User profile management
 - Complete transaction history
+- Total Portfolio Value
 
 ### Data Management
 - Secure data storage with Firebase Firestore
